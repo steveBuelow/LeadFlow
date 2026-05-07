@@ -168,16 +168,18 @@ def register_routes(app):
 
     @app.route("/generate-followup", methods=["POST"])
     def generate_followup():
-        data = request.get_json(silent=True) or {}
-        customer_name = (data.get("name") or "there").strip() or "there"
-        original_msg = (data.get("message") or "your inquiry").strip() or "your inquiry"
+        if "user_id" not in session:
+            data = request.get_json(silent=True) or {}
+            customer_name = (data.get("name") or "there").strip() or "there"
+            original_msg = (data.get("message") or "your inquiry").strip() or "your inquiry"
 
-        summary = (original_msg[:50] + "...") if len(original_msg) > 50 else original_msg
+            summary = (original_msg[:50] + "...") if len(original_msg) > 50 else original_msg
 
-        templates = [
-            f"Hi {customer_name},\n\nI’m following up on the message you sent about '{summary}'. I wanted to see if you had any other questions or if you're ready to take the next steps!\n\nBest,",
-            f"Hello {customer_name},\n\nI hope you're having a great week. I'm checking back in regarding your interest in {summary}. We have some openings in the schedule next week if you'd like to get started.\n\nThanks!",
-            f"Hi {customer_name},\n\nJust staying on your radar regarding your inquiry. Let me know if I can help with anything else!\n\nCheers,",
-        ]
+            templates = [
+                f"Hi {customer_name},\n\nI’m following up on the message you sent about '{summary}'. I wanted to see if you had any other questions or if you're ready to take the next steps!\n\nBest,",
+                f"Hello {customer_name},\n\nI hope you're having a great week. I'm checking back in regarding your interest in {summary}. We have some openings in the schedule next week if you'd like to get started.\n\nThanks!",
+                f"Hi {customer_name},\n\nJust staying on your radar regarding your inquiry. Let me know if I can help with anything else!\n\nCheers,",
+            ]
+            return jsonify({"error": "Unauthorized"}), 401
 
         return jsonify({"followup_text": random.choice(templates)}), 200
