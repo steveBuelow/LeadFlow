@@ -91,8 +91,8 @@ def register_routes(app):
                 d["source"].strip(),
                 d["message"].strip(),
                 d["status"].strip(),
-                notes = d.get("notes", "").strip()
-                session["user_id"],
+                session["user_id"],                 # Move the positional argument up
+                notes=d.get("notes", "").strip(),   # Keyword argument goes at the very end
             )
             return jsonify({"success": True, "id": new_id}), 201
         except Exception:
