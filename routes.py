@@ -79,6 +79,8 @@ def register_routes(app):
             return jsonify({"error": "Unauthorized"}), 401
 
         d = request.get_json(silent=True) or {}
+        
+        # 1. Validation Logic
         required = ["name", "source", "status"]
         missing = [field for field in required if not str(d.get(field, "")).strip()]
 
@@ -86,16 +88,21 @@ def register_routes(app):
             return jsonify({"error": f"Missing fields: {', '.join(missing)}"}), 400
 
         try:
+            # 2. Safe Data Retrieval
+            # Use .get() for 'message' in case it's optional/missing from the JSON
             new_id = create_lead(
                 d["name"].strip(),
                 d["source"].strip(),
-                d["message"].strip(),
+                d.get("message", "").strip(),  # Changed from d["message"]
                 d["status"].strip(),
-                session["user_id"],                 # Move the positional argument up
-                notes=d.get("notes", "").strip(),   # Keyword argument goes at the very end
+                session["user_id"],
+                notes=d.get("notes", "").strip()
             )
             return jsonify({"success": True, "id": new_id}), 201
-        except Exception:
+            
+        except Exception as e:
+            # 3. Debugging Tip
+            print(f"Error creating lead: {e}") # This helps you see the actual error in Render logs
             return jsonify({"error": "Failed to create lead"}), 500
 
     @app.route("/remove-lead", methods=["DELETE"])
