@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadFlow — CRM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:          #0e1a24;
+            --surface:     #152030;
+            --surface2:    #1c2a3e;
+            --surface3:    #22324a;
+            --border:      #2a3d52;
+            --border-hi:   #3a5470;
+
+            --accent:      #00c2a8;
+            --accent-dim:  rgba(0,194,168,0.11);
+            --accent-glow: rgba(0,194,168,0.22);
+
+            --amber:       #f5a623;
+            --amber-dim:   rgba(245,166,35,0.11);
+            --violet:      #9b6dff;
+            --violet-dim:  rgba(155,109,255,0.11);
+            --rose:        #ff5b79;
+            --rose-dim:    rgba(255,91,121,0.11);
+
+            --text:        #ddeaf5;
+            --text-muted:  #6b90ab;
+            --text-subtle: #3a5268;
+
+            --radius:      12px;
+            --radius-sm:   8px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image:
+                linear-gradient(rgba(0,194,168,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,194,168,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .shell { display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* ── HEADER ── */
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 28px; height: 58px;
+            background: rgba(14,26,36,0.90);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(16px);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo-mark { display: flex; align-items: center; gap: 10px; }
+        .logo-icon {
+            width: 30px; height: 30px; background: var(--accent);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 15px; box-shadow: 0 0 16px var(--accent-glow);
+        }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+        .logo-text em { color: var(--accent); font-style: normal; }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+        .user-chip {
+            font-size: 12px; color: var(--text-muted);
+            background: var(--surface2); border: 1px solid var(--border);
+            padding: 5px 12px; border-radius: 20px;
+        }
+        .btn-logout {
+            font-size: 12px; color: var(--text-muted);
+            background: transparent; border: 1px solid var(--border);
+            padding: 5px 12px; border-radius: 20px;
+            cursor: pointer; font-family: 'Lato', sans-serif;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .btn-logout:hover { color: var(--rose); border-color: var(--rose); }
+
+        .main { flex: 1; padding: 24px 28px 60px; max-width: 1360px; margin: 0 auto; width: 100%; }
+
+        /* ── AUTH ── */
+        #auth-wrap {
+            display: flex; justify-content: center; align-items: center;
+            min-height: calc(100vh - 58px); padding: 20px;
+        }
+        .auth-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 40px 36px;
+            width: 100%; max-width: 400px; animation: fadeUp 0.35s ease;
+        }
+        .auth-eyebrow {
+            font-size: 11px; font-weight: 700; color: var(--accent);
+            letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;
+        }
+        .auth-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 28px;
+        }
+        .form-group { margin-bottom: 12px; }
+        label {
+            font-size: 12px; color: var(--text-muted); font-weight: 700;
+            display: block; margin-bottom: 5px; letter-spacing: 0.04em; text-transform: uppercase;
+        }
+
+        input, textarea, select {
+            width: 100%; padding: 10px 14px;
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text); font-family: 'Lato', sans-serif; font-size: 14px;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            outline: none; appearance: none;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        select option { background: var(--surface2); }
+        textarea { resize: vertical; min-height: 72px; }
+        ::placeholder { color: var(--text-subtle); }
+
+        /* ── BUTTONS ── */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 10px 20px; border-radius: var(--radius-sm); border: none;
+            font-family: 'Lato', sans-serif; font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent-glow); }
+        .btn-primary:hover { opacity: 0.88; }
+        .btn-ghost { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--border-hi); color: var(--text); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+        .btn-danger { background: var(--rose-dim);   color: var(--rose);   border: 1px solid rgba(255,91,121,0.25); }
+        .btn-info   { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,194,168,0.25); }
+        .btn-edit   { background: var(--violet-dim); color: var(--violet); border: 1px solid rgba(155,109,255,0.25); }
+        .btn-danger:hover { background: rgba(255,91,121,0.2); }
+        .btn-info:hover   { background: rgba(0,194,168,0.2); }
+        .btn-edit:hover   { background: rgba(155,109,255,0.2); }
+
+        .auth-row { display: flex; gap: 8px; margin-top: 20px; }
+        .auth-row .btn { flex: 1; justify-content: center; }
+
+        /* ── STATS BAR ── */
+        .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+        .stat-tile {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px 22px;
+            position: relative; overflow: hidden;
+        }
+        .stat-tile::before {
+            content: ''; position: absolute; inset: 0;
+            background: var(--tile-color, var(--accent-dim));
+            opacity: 0.38; pointer-events: none;
+        }
+        .stat-tile.t-accent { --tile-color: var(--accent-dim); }
+        .stat-tile.t-amber  { --tile-color: var(--amber-dim);  }
+        .stat-tile.t-violet { --tile-color: var(--violet-dim); }
+        .stat-tile.t-rose   { --tile-color: var(--rose-dim);   }
+        .stat-num {
+            font-family: 'DM Mono', monospace;
+            font-size: 34px; font-weight: 500; line-height: 1; margin-bottom: 6px;
+        }
+        .t-accent .stat-num { color: var(--accent); }
+        .t-amber  .stat-num { color: var(--amber);  }
+        .t-violet .stat-num { color: var(--violet); }
+        .t-rose   .stat-num { color: var(--rose);   }
+        .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+        .stat-sub   { font-size: 11px; color: var(--text-subtle); margin-top: 2px; font-family: 'DM Mono', monospace; }
+
+        /* ── TOOLBAR ── */
+        .toolbar {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 12px; margin-bottom: 18px;
+        }
+        .toolbar-left { display: flex; align-items: center; gap: 10px; }
+        .toolbar-right { display: flex; gap: 8px; flex-wrap: wrap; }
+        .view-pills {
+            display: flex; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; padding: 3px; gap: 2px;
+        }
+        .pill {
+            background: transparent; border: none; color: var(--text-muted);
+            font-family: 'Lato', sans-serif; font-size: 13px; font-weight: 700;
+            padding: 6px 14px; border-radius: 6px; cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .pill.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+        .filter-select { width: auto; min-width: 140px; padding: 7px 12px; font-size: 13px; }
+
+        /* ── ADD PANEL ── */
+        .add-panel {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 22px 24px; margin-bottom: 22px;
+        }
+        .panel-title {
+            font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            color: var(--text-muted); margin-bottom: 16px;
+        }
+        .add-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .add-grid-wide { grid-column: span 2; }
+
+        /* ── REMINDERS ── */
+        .reminder-strip {
+            background: linear-gradient(90deg, rgba(245,166,35,0.07), transparent);
+            border: 1px solid rgba(245,166,35,0.22); border-left: 3px solid var(--amber);
+            border-radius: var(--radius); padding: 14px 18px; margin-bottom: 18px;
+        }
+        .reminder-strip h4 {
+            font-size: 12px; font-weight: 700; color: var(--amber);
+            text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px;
+        }
+        .reminder-strip li { font-size: 13px; color: var(--text-muted); margin-left: 16px; margin-top: 4px; line-height: 1.5; }
+        .reminder-strip strong { color: var(--text); }
+
+        /* ── SKELETON ── */
+        .skeleton-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px;
+        }
+        .skel {
+            background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 6px;
+        }
+        .skel-name  { height: 16px; width: 42%; margin-bottom: 8px; }
+        .skel-sub   { height: 12px; width: 26%; margin-bottom: 12px; }
+        .skel-tags  { height: 20px; width: 55%; margin-bottom: 10px; }
+        .skel-text  { height: 11px; width: 90%; margin-bottom: 5px; }
+        .skel-text2 { height: 11px; width: 70%; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* ── LEAD CARD ── */
+        .lead-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px;
+            display: flex; align-items: flex-start; gap: 16px;
+            transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+            animation: fadeUp 0.2s ease;
+        }
+        .lead-card:hover {
+            border-color: var(--border-hi);
+            box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+            transform: translateY(-1px);
+        }
+        .lead-card.removing {
+            opacity: 0; transform: translateX(-10px);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .lead-main { flex: 1; min-width: 0; }
+        .lead-name   { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px; }
+        .lead-source { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .lead-meta   { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .lead-message {
+            font-size: 12px; color: var(--text-muted); margin-top: 8px;
+            line-height: 1.55; padding-top: 8px; border-top: 1px solid var(--border);
+            white-space: pre-wrap;
+        }
+        .lead-notes  { font-size: 12px; color: var(--text-subtle); margin-top: 6px; font-style: italic; }
+        .lead-date   { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-subtle); }
+
+        .badge {
+            font-size: 10px; font-weight: 700;
+            padding: 3px 9px; border-radius: 20px;
+            text-transform: uppercase; letter-spacing: 0.06em;
+        }
+        .badge-New       { background: var(--accent-dim); color: var(--accent); }
+        .badge-Contacted { background: var(--amber-dim);  color: var(--amber);  }
+        .badge-Qualified { background: var(--violet-dim); color: var(--violet); }
+        .badge-Closed    { background: rgba(100,120,140,0.15); color: var(--text-muted); }
+
+        .source-tag {
+            font-size: 10px; font-weight: 700;
+            padding: 3px 9px; border-radius: 4px;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            background: var(--surface3); color: var(--text-muted);
+        }
+
+        .card-actions {
+            display: flex; flex-direction: column; gap: 6px;
+            flex-shrink: 0; opacity: 0; transition: opacity 0.2s;
+        }
+        .lead-card:hover .card-actions { opacity: 1; }
+
+        .followup-box {
+            margin-top: 12px; font-size: 12.5px; font-family: 'DM Mono', monospace;
+            line-height: 1.65; white-space: pre-wrap;
+            background: var(--bg); border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 8px; padding: 12px 14px; color: var(--text); display: none;
+        }
+        .followup-box.open { display: block; animation: fadeUp 0.2s ease; }
+        .followup-typing::after { content: '▋'; animation: blink 0.8s step-end infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* ── KANBAN ── */
+        .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: start; }
+        .k-col {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); min-height: 240px;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .k-col.over { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+        .k-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 13px 14px; border-bottom: 1px solid var(--border);
+        }
+        .k-label {
+            display: flex; align-items: center; gap: 7px;
+            font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .k-dot { width: 7px; height: 7px; border-radius: 50%; }
+        .k-count {
+            font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted);
+            background: var(--surface2); border: 1px solid var(--border);
+            padding: 1px 8px; border-radius: 20px;
+        }
+        .k-col.col-New       .k-label { color: var(--accent); }
+        .k-col.col-New       .k-dot   { background: var(--accent); }
+        .k-col.col-Contacted .k-label { color: var(--amber); }
+        .k-col.col-Contacted .k-dot   { background: var(--amber); }
+        .k-col.col-Qualified .k-label { color: var(--violet); }
+        .k-col.col-Qualified .k-dot   { background: var(--violet); }
+        .k-col.col-Closed    .k-label { color: var(--text-muted); }
+        .k-col.col-Closed    .k-dot   { background: var(--text-muted); }
+        .k-cards { padding: 10px; min-height: 100px; }
+        .k-card {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 13px 14px; margin-bottom: 8px;
+            cursor: grab; user-select: none;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+        }
+        .k-card:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(0,0,0,0.3); border-color: var(--border-hi); }
+        .k-card.dragging { opacity: 0.3; cursor: grabbing; }
+        .k-card-name   { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; }
+        .k-card-source { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+        .k-card-snippet { font-size: 11px; color: var(--text-subtle); margin-top: 6px; line-height: 1.45; }
+        .k-card-date   { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-subtle); margin-top: 10px; }
+        .k-empty       { font-size: 12px; color: var(--text-subtle); text-align: center; padding: 20px 10px; }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 200; padding: 20px;
+        }
+        .modal-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 28px 28px 24px;
+            width: 100%; max-width: 520px; animation: fadeUp 0.22s ease;
+        }
+        .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+        .modal-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .modal-footer { display: flex; gap: 10px; margin-top: 18px; }
+
+        /* ── TOAST ── */
+        #toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 300;
+            background: var(--surface3); border: 1px solid var(--border-hi);
+            border-radius: 10px; padding: 12px 18px;
+            font-size: 13px; font-weight: 700;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            transform: translateY(60px); opacity: 0;
+            transition: transform 0.25s ease, opacity 0.25s ease;
+            pointer-events: none;
+        }
+        #toast.show  { transform: translateY(0); opacity: 1; }
+        #toast.t-ok  { border-color: rgba(0,194,168,0.4);  color: var(--accent); }
+        #toast.t-err { border-color: rgba(255,91,121,0.4); color: var(--rose); }
+
+        /* ── UTIL ── */
+        .hidden { display: none !important; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 1100px) { .stats-bar { grid-template-columns: repeat(2, 1fr); } .board { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 800px)  { .add-grid { grid-template-columns: 1fr 1fr; } .add-grid-wide { grid-column: span 2; } .modal-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px)  { .board { grid-template-columns: 1fr; } .add-grid { grid-template-columns: 1fr; } .add-grid-wide { grid-column: span 1; } .card-actions { opacity: 1; } .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="logo-mark">
+            <div class="logo-icon">⚡</div>
+            <div class="logo-text">Lead<em>Flow</em></div>
+        </div>
+        <div class="header-right" id="header-user" style="display:none;">
+            <span class="user-chip" id="username-display"></span>
+            <button class="btn-logout" onclick="logout()">Sign out</button>
+        </div>
+    </header>
+
+    <!-- AUTH -->
+    <div id="auth-wrap">
+        <div class="auth-card">
+            <div class="auth-eyebrow">CRM Dashboard</div>
+            <div class="auth-title">Welcome back 👋</div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="auth-user" placeholder="Enter your username" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="auth-pass" placeholder="Enter your password" autocomplete="current-password"
+                    onkeydown="if(event.key==='Enter') doLogin()">
+            </div>
+            <div class="auth-row">
+                <button class="btn btn-ghost" onclick="doSignup()">Create Account</button>
+                <button class="btn btn-primary" onclick="doLogin()">Sign In →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <main class="main hidden" id="app">
+
+        <!-- ADD LEAD -->
+        <div class="add-panel">
+            <div class="panel-title">+ New Lead</div>
+            <div class="add-grid">
+                <input type="text" id="f-name"    placeholder="Contact Name" class="add-grid-wide">
+                <input type="text" id="f-source"  placeholder="Source  (e.g. Referral, Website)">
+                <select id="f-status">
+                    <option value="New">New</option>
+                    <option value="Contacted">Contacted</option>
+                    <option value="Qualified">Qualified</option>
+                    <option value="Closed">Closed</option>
+                </select>
+                <textarea id="f-message" placeholder="Initial message / inquiry…" style="margin:0;" class="add-grid-wide"></textarea>
+                <textarea id="f-notes"   placeholder="Internal notes…" style="margin:0;" class="add-grid-wide"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="addLead()">Add Lead</button>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-bar">
+            <div class="stat-tile t-accent">
+                <div class="stat-num" id="s-total">—</div>
+                <div class="stat-label">Total Leads</div>
+                <div class="stat-sub" id="s-week">—</div>
+            </div>
+            <div class="stat-tile t-amber">
+                <div class="stat-num" id="s-new">—</div>
+                <div class="stat-label">New</div>
+                <div class="stat-sub">awaiting contact</div>
+            </div>
+            <div class="stat-tile t-violet">
+                <div class="stat-num" id="s-qualified">—</div>
+                <div class="stat-label">Qualified</div>
+                <div class="stat-sub">ready to close</div>
+            </div>
+            <div class="stat-tile t-rose">
+                <div class="stat-num" id="s-conversion">—</div>
+                <div class="stat-label">Closed Rate</div>
+                <div class="stat-sub">of total leads</div>
+            </div>
+        </div>
+
+        <!-- REMINDERS -->
+        <div id="reminder-strip" class="reminder-strip hidden">
+            <h4>⚠ Follow-up Reminders</h4>
+            <ul id="reminder-items"></ul>
+        </div>
+
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div class="view-pills">
+                    <button class="pill active" id="pill-list"   onclick="switchView('list')">☰  List</button>
+                    <button class="pill"         id="pill-kanban" onclick="switchView('kanban')">⊞  Board</button>
+                </div>
+            </div>
+            <div class="toolbar-right" id="list-filters">
+                <select class="filter-select" id="flt-status" onchange="renderList()">
+                    <option value="All">All Statuses</option>
+                    <option value="New">New</option>
+                    <option value="Contacted">Contacted</option>
+                    <option value="Qualified">Qualified</option>
+                    <option value="Closed">Closed</option>
+                </select>
+                <select class="filter-select" id="flt-sort" onchange="renderList()">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- LIST VIEW -->
+        <div id="list-view"></div>
+
+        <!-- KANBAN VIEW -->
+        <div id="kanban-view" class="hidden">
+            <div class="board">
+                <div class="k-col col-New" id="col-New"
+                     ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="onDrop(event,'New')">
+                    <div class="k-header">
+                        <div class="k-label"><span class="k-dot"></span> New</div>
+                        <span class="k-count" id="kc-New">0</span>
+                    </div>
+                    <div class="k-cards" id="kk-New"></div>
+                </div>
+                <div class="k-col col-Contacted" id="col-Contacted"
+                     ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="onDrop(event,'Contacted')">
+                    <div class="k-header">
+                        <div class="k-label"><span class="k-dot"></span> Contacted</div>
+                        <span class="k-count" id="kc-Contacted">0</span>
+                    </div>
+                    <div class="k-cards" id="kk-Contacted"></div>
+                </div>
+                <div class="k-col col-Qualified" id="col-Qualified"
+                     ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="onDrop(event,'Qualified')">
+                    <div class="k-header">
+                        <div class="k-label"><span class="k-dot"></span> Qualified</div>
+                        <span class="k-count" id="kc-Qualified">0</span>
+                    </div>
+                    <div class="k-cards" id="kk-Qualified"></div>
+                </div>
+                <div class="k-col col-Closed" id="col-Closed"
+                     ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="onDrop(event,'Closed')">
+                    <div class="k-header">
+                        <div class="k-label"><span class="k-dot"></span> Closed</div>
+                        <span class="k-count" id="kc-Closed">0</span>
+                    </div>
+                    <div class="k-cards" id="kk-Closed"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay hidden" id="edit-modal">
+    <div class="modal-card">
+        <div class="modal-title">Edit Lead</div>
+        <input type="hidden" id="e-id">
+        <div class="modal-grid">
+            <input type="text"  id="e-name"    placeholder="Contact Name">
+            <input type="text"  id="e-source"  placeholder="Source">
+            <select id="e-status">
+                <option value="New">New</option>
+                <option value="Contacted">Contacted</option>
+                <option value="Qualified">Qualified</option>
+                <option value="Closed">Closed</option>
+            </select>
+            <div></div>
+            <textarea id="e-message" placeholder="Message / Inquiry" style="margin:0;"></textarea>
+            <textarea id="e-notes"   placeholder="Internal Notes"    style="margin:0;"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+            <button class="btn btn-ghost"   onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+let leads       = [];
+let view        = 'list';
+let dragId      = null;
+let currentUser = '';
+let nextTempId  = -1;
+
+/* ═══════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════ */
+function esc(t) {
+    if (!t) return '';
+    const d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+}
+function fmt(dateStr) {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function fmtShort(dateStr) {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+let toastTimer = null;
+function toast(msg, type = 'ok') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `show t-${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.className = ''; }, 2800);
+}
+
+function showSkeletons(n = 3) {
+    document.getElementById('list-view').innerHTML = Array(n).fill(0).map(() => `
+        <div class="skeleton-card">
+            <div class="skel skel-name"></div>
+            <div class="skel skel-sub"></div>
+            <div class="skel skel-tags"></div>
+            <div class="skel skel-text"></div>
+            <div class="skel skel-text2"></div>
+        </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════ */
+async function doLogin() {
+    const u = document.getElementById('auth-user').value.trim();
+    const p = document.getElementById('auth-pass').value.trim();
+    if (!u || !p) return toast('Please enter your username and password.', 'err');
+    try {
+        const res  = await fetch('/login', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        if (res.ok) { currentUser = u; enterApp(); }
+        else toast(data.error || 'Login failed.', 'err');
+    } catch { toast('Could not reach server.', 'err'); }
+}
+
+async function doSignup() {
+    const u = document.getElementById('auth-user').value.trim();
+    const p = document.getElementById('auth-pass').value.trim();
+    if (!u || !p) return toast('Please enter a username and password.', 'err');
+    try {
+        const res  = await fetch('/signup', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        if (res.ok) toast('Account created! You can now sign in.');
+        else toast(data.error || 'Signup failed.', 'err');
+    } catch { toast('Could not reach server.', 'err'); }
+}
+
+function enterApp() {
+    document.getElementById('auth-wrap').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('header-user').style.display = 'flex';
+    document.getElementById('username-display').textContent = currentUser;
+    loadLeads();
+}
+
+async function logout() {
+    try {
+        await fetch('/logout', { method: 'POST', credentials: 'include' });
+    } catch {}
+    currentUser = '';
+    leads = [];
+    document.getElementById('auth-wrap').classList.remove('hidden');
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('header-user').style.display = 'none';
+    document.getElementById('auth-user').value = '';
+    document.getElementById('auth-pass').value = '';
+}
+
+/* ═══════════════════════════════════════════════════
+   DATA — initial load shows skeletons; actions are optimistic
+═══════════════════════════════════════════════════ */
+async function loadLeads(silent = false) {
+    if (!silent) showSkeletons(3);
+    try {
+        const res  = await fetch('/leads', { credentials: 'include' });
+        const data = await res.json();
+        if (res.ok) {
+            leads = data.leads || [];
+            renderStats();
+            view === 'list' ? renderList() : renderKanban();
+            loadReminders();
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function addLead() {
+    const name    = document.getElementById('f-name').value.trim();
+    const source  = document.getElementById('f-source').value.trim();
+    const message = document.getElementById('f-message').value.trim();
+    const status  = document.getElementById('f-status').value;
+    const notes   = document.getElementById('f-notes').value.trim();
+    if (!name) return toast('Please enter a contact name.', 'err');
+
+    // Optimistic insert
+    const tempId   = nextTempId--;
+    const tempLead = { id: tempId, name, source, message, status, notes, created_at: new Date().toISOString() };
+    leads.unshift(tempLead);
+    renderStats(); renderList();
+    ['f-name','f-source','f-message','f-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-status').value = 'New';
+    toast('Lead added ✓');
+
+    try {
+        const res = await fetch('/add-lead', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ name, source, message, status, notes })
+        });
+        if (res.ok) {
+            await loadLeads(true); // silent sync to get real server ID
+        } else {
+            leads = leads.filter(l => l.id !== tempId);
+            renderStats(); renderList();
+            const d = await res.json();
+            toast(d.error || 'Failed to add lead.', 'err');
+        }
+    } catch {
+        leads = leads.filter(l => l.id !== tempId);
+        renderStats(); renderList();
+        toast('Could not reach server.', 'err');
+    }
+}
+
+async function deleteLead(id) {
+    if (!confirm('Remove this lead? This cannot be undone.')) return;
+
+    // Optimistic remove with slide animation
+    const card = document.getElementById(`card-${id}`);
+    if (card) {
+        card.classList.add('removing');
+        await new Promise(r => setTimeout(r, 180));
+    }
+    const backup = [...leads];
+    leads = leads.filter(l => l.id !== id);
+    renderStats(); renderList();
+    toast('Lead removed.');
+
+    try {
+        const res = await fetch('/remove-lead', {
+            method: 'DELETE',
+            headers: {'Content-Type':'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ id })
+        });
+        if (!res.ok) {
+            leads = backup; renderStats(); renderList();
+            toast('Delete failed — restored.', 'err');
+        }
+    } catch {
+        leads = backup; renderStats(); renderList();
+        toast('Could not reach server.', 'err');
+    }
+}
+
+/* ═══════════════════════════════════════════════════
+   STATS
+═══════════════════════════════════════════════════ */
+function renderStats() {
+    const total     = leads.length;
+    const newCount  = leads.filter(l => l.status === 'New').length;
+    const qualified = leads.filter(l => l.status === 'Qualified').length;
+    const closed    = leads.filter(l => l.status === 'Closed').length;
+    const rate      = total === 0 ? '0' : ((closed / total) * 100).toFixed(1);
+    const weekAgo   = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekly    = leads.filter(l => l.created_at && new Date(l.created_at) >= weekAgo).length;
+
+    document.getElementById('s-total').textContent      = total;
+    document.getElementById('s-week').textContent       = `+${weekly} this week`;
+    document.getElementById('s-new').textContent        = newCount;
+    document.getElementById('s-qualified').textContent  = qualified;
+    document.getElementById('s-conversion').textContent = rate + '%';
+}
+
+/* ═══════════════════════════════════════════════════
+   REMINDERS
+═══════════════════════════════════════════════════ */
+async function loadReminders() {
+    try {
+        const res  = await fetch('/reminders', { credentials: 'include' });
+        const data = await res.json();
+        const strip = document.getElementById('reminder-strip');
+        const list  = document.getElementById('reminder-items');
+        if (res.ok && data.reminders?.length > 0) {
+            strip.classList.remove('hidden');
+            list.innerHTML = data.reminders.map(r =>
+                `<li>No contact yet with <strong>${esc(r.name)}</strong> — came in via <em>${esc(r.source || 'unknown')}</em> over 7 days ago.</li>`
+            ).join('');
+        } else {
+            strip.classList.add('hidden');
+        }
+    } catch (e) { console.error(e); }
+}
+
+/* ═══════════════════════════════════════════════════
+   VIEW TOGGLE
+═══════════════════════════════════════════════════ */
+function switchView(v) {
+    view = v;
+    document.getElementById('pill-list').classList.toggle('active', v === 'list');
+    document.getElementById('pill-kanban').classList.toggle('active', v === 'kanban');
+    document.getElementById('list-filters').style.display = v === 'list' ? 'flex' : 'none';
+    document.getElementById('list-view').classList.toggle('hidden', v !== 'list');
+    document.getElementById('kanban-view').classList.toggle('hidden', v !== 'kanban');
+    v === 'kanban' ? renderKanban() : renderList();
+}
+
+/* ═══════════════════════════════════════════════════
+   LIST VIEW
+═══════════════════════════════════════════════════ */
+function renderList() {
+    const statusFilter = document.getElementById('flt-status').value;
+    const sortDir      = document.getElementById('flt-sort').value;
+    const container    = document.getElementById('list-view');
+
+    let filtered = leads.filter(l => statusFilter === 'All' || l.status === statusFilter);
+    filtered.sort((a, b) => sortDir === 'newest'
+        ? new Date(b.created_at) - new Date(a.created_at)
+        : new Date(a.created_at) - new Date(b.created_at));
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<p style="text-align:center;color:var(--text-muted);padding:60px 0;font-size:14px;">No leads found. Add your first lead above.</p>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(l => {
+        const snippet = l.message ? (l.message.length > 120 ? l.message.slice(0, 120) + '…' : l.message) : '';
+        return `
+        <div class="lead-card" id="card-${l.id}">
+            <div class="lead-main">
+                <div class="lead-name">${esc(l.name)}</div>
+                <div class="lead-source">${esc(l.source || 'Unknown source')}</div>
+                <div class="lead-meta">
+                    <span class="badge badge-${esc(l.status)}">${esc(l.status)}</span>
+                    <span class="source-tag">${esc(l.source || '?')}</span>
+                    <span class="lead-date">${fmt(l.created_at)}</span>
+                </div>
+                ${snippet ? `<div class="lead-message">${esc(snippet)}</div>` : ''}
+                ${l.notes ? `<div class="lead-notes">📝 ${esc(l.notes)}</div>` : ''}
+                <div id="fu-${l.id}" class="followup-box"></div>
+            </div>
+            <div class="card-actions">
+                <button class="btn btn-sm btn-info"   onclick="genFollowUp(${l.id})">✉ Follow-up</button>
+                <button class="btn btn-sm btn-edit"   onclick="openEdit(${l.id})">✎ Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteLead(${l.id})">✕ Delete</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+/* ═══════════════════════════════════════════════════
+   KANBAN
+═══════════════════════════════════════════════════ */
+function renderKanban() {
+    ['New','Contacted','Qualified','Closed'].forEach(status => {
+        const cards   = leads.filter(l => l.status === status);
+        const col     = document.getElementById(`kk-${status}`);
+        const counter = document.getElementById(`kc-${status}`);
+        counter.textContent = cards.length;
+        col.innerHTML = cards.length === 0
+            ? `<p class="k-empty">Drop leads here</p>`
+            : cards.map(l => {
+                const snippet = l.message ? (l.message.length > 60 ? l.message.slice(0,60)+'…' : l.message) : '';
+                return `
+                <div class="k-card" draggable="true"
+                     ondragstart="dragStart(event,${l.id})"
+                     ondragend="dragEnd(event)">
+                    <div class="k-card-name">${esc(l.name)}</div>
+                    <div class="k-card-source">${esc(l.source || '—')}</div>
+                    ${snippet ? `<div class="k-card-snippet">${esc(snippet)}</div>` : ''}
+                    <div class="k-card-date">${fmtShort(l.created_at)}</div>
+                </div>`;
+            }).join('');
+    });
+}
+
+/* ═══════════════════════════════════════════════════
+   DRAG & DROP
+═══════════════════════════════════════════════════ */
+function dragStart(e, id) {
+    dragId = id;
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+function dragEnd(e) {
+    e.target.classList.remove('dragging');
+    document.querySelectorAll('.k-col').forEach(c => c.classList.remove('over'));
+}
+function onOver(e)  { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.classList.add('over'); }
+function onLeave(e) { e.currentTarget.classList.remove('over'); }
+
+async function onDrop(e, newStatus) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('over');
+    if (!dragId) return;
+    const lead = leads.find(l => l.id === dragId);
+    if (!lead || lead.status === newStatus) return;
+
+    const oldStatus = lead.status;
+    lead.status = newStatus;
+    renderKanban(); renderStats();
+    toast(`Moved to ${newStatus}`);
+
+    try {
+        const res = await fetch('/update-lead', {
+            method: 'PUT',
+            headers: {'Content-Type':'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ id: lead.id, name: lead.name, source: lead.source, message: lead.message, status: newStatus, notes: lead.notes })
+        });
+        if (!res.ok) {
+            lead.status = oldStatus;
+            renderKanban(); renderStats();
+            toast('Update failed — reverted.', 'err');
+        }
+    } catch {
+        lead.status = oldStatus;
+        renderKanban(); renderStats();
+        toast('Could not reach server.', 'err');
+    }
+    dragId = null;
+}
+
+/* ═══════════════════════════════════════════════════
+   FOLLOW-UP GENERATOR
+═══════════════════════════════════════════════════ */
+async function genFollowUp(id) {
+    const lead = leads.find(l => l.id === id);
+    if (!lead) return;
+    const box = document.getElementById(`fu-${id}`);
+    box.textContent = 'Generating…';
+    box.classList.add('open', 'followup-typing');
+    try {
+        const res  = await fetch('/generate-followup', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ name: lead.name, message: lead.message || '' })
+        });
+        const data = await res.json();
+        box.classList.remove('followup-typing');
+        box.textContent = data.followup_text || 'Could not generate follow-up.';
+    } catch {
+        box.classList.remove('followup-typing');
+        box.textContent = 'Error: could not reach server.';
+    }
+}
+
+/* ═══════════════════════════════════════════════════
+   EDIT MODAL
+═══════════════════════════════════════════════════ */
+function openEdit(id) {
+    const l = leads.find(l => l.id === id);
+    if (!l) return;
+    document.getElementById('e-id').value      = l.id;
+    document.getElementById('e-name').value    = l.name    || '';
+    document.getElementById('e-source').value  = l.source  || '';
+    document.getElementById('e-message').value = l.message || '';
+    document.getElementById('e-status').value  = l.status  || 'New';
+    document.getElementById('e-notes').value   = l.notes   || '';
+    document.getElementById('edit-modal').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+async function saveEdit() {
+    const payload = {
+        id:      document.getElementById('e-id').value,
+        name:    document.getElementById('e-name').value.trim(),
+        source:  document.getElementById('e-source').value.trim(),
+        message: document.getElementById('e-message').value.trim(),
+        status:  document.getElementById('e-status').value,
+        notes:   document.getElementById('e-notes').value.trim()
+    };
+    if (!payload.name) return toast('Name is required.', 'err');
+
+    // Optimistic update
+    const idx    = leads.findIndex(l => String(l.id) === String(payload.id));
+    const backup = idx >= 0 ? { ...leads[idx] } : null;
+    if (idx >= 0) Object.assign(leads[idx], payload);
+    closeModal();
+    renderStats(); renderList();
+    toast('Lead updated ✓');
+
+    try {
+        const res = await fetch('/update-lead', {
+            method: 'PUT',
+            headers: {'Content-Type':'application/json'},
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            if (backup && idx >= 0) Object.assign(leads[idx], backup);
+            renderStats(); renderList();
+            const d = await res.json();
+            toast(d.error || 'Update failed.', 'err');
+        }
+    } catch {
+        if (backup && idx >= 0) Object.assign(leads[idx], backup);
+        renderStats(); renderList();
+        toast('Could not reach server.', 'err');
+    }
+}
+
+document.getElementById('edit-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+});
+</script>
+</body>
+</html>

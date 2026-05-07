@@ -1,0 +1,24 @@
+# macOS junk
+._*
+.DS_Store
+
+# Python junk
+__pycache__/
+*.pyc
+
+# Database
+*.db
+*.sqlite3
+
+# Environments
+venv/
+.env
+
+# JavaScript junk
+node_modules/
+ package.json
+
+# More junk
+.agents/
+.claude/
+Screenshots/.env
