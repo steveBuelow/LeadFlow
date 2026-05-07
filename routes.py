@@ -79,7 +79,7 @@ def register_routes(app):
             return jsonify({"error": "Unauthorized"}), 401
 
         d = request.get_json(silent=True) or {}
-        required = ["name", "source", "message", "status", "notes"]
+        required = ["name", "source", "status"]
         missing = [field for field in required if not str(d.get(field, "")).strip()]
 
         if missing:
@@ -91,7 +91,7 @@ def register_routes(app):
                 d["source"].strip(),
                 d["message"].strip(),
                 d["status"].strip(),
-                d["notes"].strip(),
+                notes = d.get("notes", "").strip()
                 session["user_id"],
             )
             return jsonify({"success": True, "id": new_id}), 201
@@ -142,7 +142,7 @@ def register_routes(app):
             return jsonify({"error": "Unauthorized"}), 401
 
         d = request.get_json(silent=True) or {}
-        required = ["id", "name", "source", "message", "status", "notes"]
+        required = ["id", "name", "source", "status",]
         missing = [
             field for field in required
             if field not in d or d[field] is None or str(d[field]).strip() == ""
