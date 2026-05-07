@@ -1,6 +1,6 @@
 # LeadFlow - Simple Lead & Messages Tracking Dashboard
 
-## ![Live Demo 🔗](https://leadflow-6avi.onrender.com)
+## [Live Demo 🔗](https://leadflow-6avi.onrender.com)
 
 LeadFlow is a lightweight workflow tool designed to help small businesses organize and automate follow-up messages from platforms like Facebook Messenger and email.
 
