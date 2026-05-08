@@ -1,4 +1,3 @@
-// src/components/KanbanColumn.jsx
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import LeadCard from "./LeadCard";
 
