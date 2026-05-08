@@ -36,7 +36,6 @@ export default function KanbanBoard({ onEdit }) {
     const lead      = leads.find((l) => l.id === leadId);
     if (!lead || lead.status === newStatus) return;
 
-    // Optimistic update
     const oldStatus = lead.status;
     setLeads((prev) =>
       prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
@@ -44,15 +43,11 @@ export default function KanbanBoard({ onEdit }) {
 
     try {
       await API.put("/update-lead", {
-        id: lead.id,
-        name: lead.name,
-        source: lead.source,
-        message: lead.message,
-        status: newStatus,
-        notes: lead.notes,
+        id: lead.id, name: lead.name, source: lead.source,
+        message: lead.message ?? "", status: newStatus, notes: lead.notes ?? "",
       });
+      // optional: call a toast prop here, e.g. onToast(`Moved to ${newStatus}`)
     } catch {
-      // Revert if server rejects
       setLeads((prev) =>
         prev.map((l) => (l.id === leadId ? { ...l, status: oldStatus } : l))
       );
