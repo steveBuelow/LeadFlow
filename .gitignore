@@ -22,3 +22,8 @@ node_modules/
 .agents/
 .claude/
 Screenshots/.env
+
+# React
+instance/
+.env.*
+*.psyc
