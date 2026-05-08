@@ -91,12 +91,12 @@ def register_routes(app):
             # 2. Safe Data Retrieval
             # Use .get() for 'message' in case it's optional/missing from the JSON
             new_id = create_lead(
-                d["name"].strip(),
-                d["source"].strip(),
-                d.get("message", "").strip(),  # Changed from d["message"]
-                d["status"].strip(),
-                session["user_id"],
-                notes=d.get("notes", "").strip()
+                name=d["name"].strip(),
+                source=d["source"].strip(),
+                message=d.get("message", "").strip(),
+                status=d["status"].strip(),
+                notes=d.get("notes", "").strip(),
+                user_id=session["user_id"],
             )
             return jsonify({"success": True, "id": new_id}), 201
             
