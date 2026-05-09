@@ -1,16 +1,56 @@
-# React + Vite
+## LeadFlow — Simple Lead & Messages Tracking Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## [Live Demo 🔗](https://leadflow-6avi.onrender.com/)
 
-Currently, two official plugins are available:
+LeadFlow is a lightweight workflow tool designed to help small businesses organize and automate follow-up messages from platforms like Facebook Messenger and email.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+It replaces scattered conversations with a simple, structured pipeline so no leads or customer requests slip through.
 
-## React Compiler
+## Core Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Lead Capture (Manual Input)
+* Add new leads from Facebook Messenger or email
+* Store customer name, message, and source
+* Simple, fast input designed for real-world use
+* In-app follow-up reminders after >7 days
 
-## Expanding the ESLint configuration
+### Kanban Workflow System
+* Organize leads into stages:
+```
+- New
+- Contacted
+- Qualified
+- Closed
+```
+* Move leads between stages to track progress
+* Light React/Vite kanban board UI (drag-and-drop workflow)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Lead Management
+* Attach notes to each lead
+* Track follow-ups and ongoing conversations
+* Maintain visibility across all customer interactions
+* Optimistic UI updates (reverts on API failure)
+* Better error surfacing for failed deletes/updates
+
+### Auth + Sessions
+* Create account + log in / log out
+* Session persistence endpoint (`/me`) to keep you signed in
+
+### Follow-ups
+* Follow-up reminder list for “New” leads older than 7 days
+* One-click follow-up message generator (simple templates)
+
+## Tech stack
+* **Backend:** Python, Flask
+* **Database:** PostgreSQL
+* **Frontend:** React + Vite (plus lightweight HTML/CSS/JS where useful)
+* **Deployment:** Render
+
+## Tests
+Basic route tests included with `pytest` (auth guardrails, session behavior, add/delete flows).
+
+## Future Improvements
+* [ ] Automated message ingestion (Facebook / email APIs)
+* [x] Notifications for follow-ups
+* [x] Multi-user support
+* [x] Analytics dashboard
