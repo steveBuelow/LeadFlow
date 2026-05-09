@@ -14,6 +14,13 @@ def connect_db():
 
 @contextmanager
 def get_db():
+    """Yield a DB connection and always close it.
+
+    Usage:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                ...
+    """
     conn = connect_db()
     try:
         yield conn

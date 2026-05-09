@@ -6,6 +6,7 @@ from db import get_db
 
 
 def _jsonify_row(row: dict) -> dict:
+    """Convert psycopg2/Decimal/datetime values into JSON-friendly primitives."""
     out = dict(row)
     for k, v in list(out.items()):
         if isinstance(v, Decimal):
@@ -15,7 +16,15 @@ def _jsonify_row(row: dict) -> dict:
     return out
 
 
-def create_user(username, password):
+# ── USERS ─────────────────────────────────────────────────────────────────────
+
+
+def create_user(username: str, password: str) -> None:
+    username = (username or "").strip()
+    password = password or ""
+    if not username or not password:
+        raise ValueError("username and password are required")
+
     hashed_pw = generate_password_hash(password)
     with get_db() as conn:
         try:
@@ -30,7 +39,9 @@ def create_user(username, password):
             raise
 
 
-def find_user(username, password):
+def find_user(username: str, password: str):
+    username = (username or "").strip()
+    password = password or ""
     if not username or not password:
         return None
 
@@ -47,7 +58,7 @@ def find_user(username, password):
     return None
 
 
-def get_user_by_id(user_id):
+def get_user_by_id(user_id: int):
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT id, username FROM users WHERE id = %s", (user_id,))
@@ -55,7 +66,27 @@ def get_user_by_id(user_id):
             return dict(row) if row else None
 
 
-def create_lead(name, source, message, status, notes, user_id):
+# ── LEADS ─────────────────────────────────────────────────────────────────────
+
+
+def list_leads(user_id: int):
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, name, source, message, status, notes, created_at
+                FROM leads
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+                """,
+                (user_id,),
+            )
+            rows = cur.fetchall()
+
+    return [_jsonify_row(r) for r in rows]
+
+
+def create_lead(name, source, message, status, notes, user_id: int) -> int:
     with get_db() as conn:
         try:
             with conn.cursor() as cur:
@@ -75,7 +106,7 @@ def create_lead(name, source, message, status, notes, user_id):
             raise
 
 
-def delete_lead(lead_id, user_id):
+def delete_lead(lead_id: int, user_id: int) -> bool:
     with get_db() as conn:
         try:
             with conn.cursor() as cur:
@@ -91,18 +122,18 @@ def delete_lead(lead_id, user_id):
             raise
 
 
-def update_lead(lead_id, user_id, name, source, message, status, notes):
+def update_lead(lead_id: int, user_id: int, name, source, message, status, notes) -> bool:
     with get_db() as conn:
         try:
             with conn.cursor() as cur:
                 cur.execute(
                     """
                     UPDATE leads
-                    SET name = %s,
+                    SET name   = %s,
                         source = %s,
                         message = %s,
-                        status = %s,
-                        notes = %s
+                        status  = %s,
+                        notes   = %s
                     WHERE id = %s AND user_id = %s
                     """,
                     (name, source, message, status, notes, lead_id, user_id),

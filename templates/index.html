@@ -82,7 +82,7 @@
 
         .main { flex: 1; padding: 28px 28px 60px; max-width: 1360px; margin: 0 auto; width: 100%; }
 
-        /* ── AUTH — no box, just floating form ── */
+        /* ── AUTH ── */
         #auth-wrap {
             display: flex; justify-content: center; align-items: center;
             min-height: calc(100vh - 54px); padding: 20px;
@@ -106,7 +106,7 @@
             display: block; margin-bottom: 6px; letter-spacing: 0.05em; text-transform: uppercase;
         }
 
-        /* ── INPUTS — underline style on auth, box style in app ── */
+        /* ── INPUTS ── */
         input, textarea, select {
             width: 100%; padding: 10px 0;
             background: transparent;
@@ -115,13 +115,10 @@
             transition: border-color 0.15s;
             outline: none; appearance: none; border-radius: 0;
         }
-        input:focus, textarea:focus, select:focus {
-            border-bottom-color: var(--accent);
-        }
+        input:focus, textarea:focus, select:focus { border-bottom-color: var(--accent); }
         select option { background: var(--surface2); }
         ::placeholder { color: var(--text-subtle); }
 
-        /* override underline back to box style inside .app-form */
         .app-form input, .app-form textarea, .app-form select {
             padding: 9px 12px;
             background: var(--surface2);
@@ -142,10 +139,11 @@
             cursor: pointer; transition: opacity 0.15s, transform 0.1s;
         }
         .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .btn-primary { background: var(--accent); color: #000; }
-        .btn-primary:hover { opacity: 0.85; }
+        .btn-primary:hover:not(:disabled) { opacity: 0.85; }
         .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-        .btn-ghost:hover { border-color: var(--border-hi); color: var(--text); }
+        .btn-ghost:hover:not(:disabled) { border-color: var(--border-hi); color: var(--text); }
         .btn-sm { padding: 5px 11px; font-size: 12px; border-radius: 6px; }
         .btn-danger { background: var(--rose-dim);   color: var(--rose);   border: 1px solid rgba(255,91,121,0.2); }
         .btn-info   { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,194,168,0.2); }
@@ -186,7 +184,6 @@
             display: flex; align-items: center; justify-content: space-between;
             flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
         }
-        .toolbar-left { display: flex; align-items: center; gap: 10px; }
         .toolbar-right { display: flex; gap: 8px; flex-wrap: wrap; }
         .view-pills {
             display: flex;
@@ -233,24 +230,6 @@
         }
         .reminder-strip li { font-size: 13px; color: var(--text-muted); margin-left: 16px; margin-top: 3px; line-height: 1.5; }
         .reminder-strip strong { color: var(--text); }
-
-        /* ── SKELETON ── */
-        .skeleton-card {
-            background: var(--surface);
-            border-radius: var(--radius); padding: 16px 18px; margin-bottom: 8px;
-        }
-        .skel {
-            background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.4s infinite;
-            border-radius: 5px;
-        }
-        .skel-name  { height: 15px; width: 40%; margin-bottom: 8px; }
-        .skel-sub   { height: 11px; width: 24%; margin-bottom: 12px; }
-        .skel-tags  { height: 18px; width: 50%; margin-bottom: 10px; }
-        .skel-text  { height: 10px; width: 88%; margin-bottom: 5px; }
-        .skel-text2 { height: 10px; width: 65%; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
         /* ── LEAD CARD ── */
         .lead-card {
@@ -429,7 +408,7 @@
         </div>
     </header>
 
-    <!-- AUTH — no card box, just a clean floating form -->
+    <!-- AUTH -->
     <div id="auth-wrap">
         <div class="auth-card">
             <div class="auth-eyebrow">CRM Dashboard</div>
@@ -444,8 +423,8 @@
                     onkeydown="if(event.key==='Enter') doLogin()">
             </div>
             <div class="auth-row">
-                <button class="btn btn-ghost" onclick="doSignup()">Create Account</button>
-                <button class="btn btn-primary" onclick="doLogin()">Sign In →</button>
+                <button class="btn btn-ghost" id="btn-signup" onclick="doSignup()">Create Account</button>
+                <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Sign In →</button>
             </div>
         </div>
     </div>
@@ -457,7 +436,7 @@
         <div class="add-panel app-form">
             <div class="panel-title">+ New Lead</div>
             <div class="add-grid">
-                <input type="text" id="f-name"    placeholder="Contact Name" class="add-grid-wide">
+                <input type="text" id="f-name"    placeholder="Contact Name *" class="add-grid-wide">
                 <input type="text" id="f-source"  placeholder="Source  (e.g. Referral, Website)">
                 <select id="f-status">
                     <option value="New">New</option>
@@ -503,11 +482,9 @@
 
         <!-- TOOLBAR -->
         <div class="toolbar">
-            <div class="toolbar-left">
-                <div class="view-pills">
-                    <button class="pill active" id="pill-list"   onclick="switchView('list')">☰ List</button>
-                    <button class="pill"         id="pill-kanban" onclick="switchView('kanban')">⊞ Board</button>
-                </div>
+            <div class="view-pills">
+                <button class="pill active" id="pill-list"   onclick="switchView('list')">☰ List</button>
+                <button class="pill"         id="pill-kanban" onclick="switchView('kanban')">⊞ Board</button>
             </div>
             <div class="toolbar-right" id="list-filters">
                 <select class="filter-select" id="flt-status" onchange="renderList()">
@@ -596,18 +573,12 @@
 <div id="toast"></div>
 
 <script>
-/* ═══════════════════════════════════════════════════
-   STATE
-═══════════════════════════════════════════════════ */
 let leads       = [];
 let view        = 'list';
 let dragId      = null;
 let currentUser = '';
 let nextTempId  = -1;
 
-/* ═══════════════════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════════════════ */
 function esc(t) {
     if (!t) return '';
     const d = document.createElement('div');
@@ -632,52 +603,59 @@ function toast(msg, type = 'ok') {
     toastTimer = setTimeout(() => { el.className = ''; }, 2800);
 }
 
-function showSkeletons(n = 3) {
-    document.getElementById('list-view').innerHTML = Array(n).fill(0).map(() => `
-        <div class="skeleton-card">
-            <div class="skel skel-name"></div>
-            <div class="skel skel-sub"></div>
-            <div class="skel skel-tags"></div>
-            <div class="skel skel-text"></div>
-            <div class="skel skel-text2"></div>
-        </div>`).join('');
-}
-
-/* ═══════════════════════════════════════════════════
-   AUTH
-═══════════════════════════════════════════════════ */
+/* ── AUTH ── */
 async function doLogin() {
     const u = document.getElementById('auth-user').value.trim();
     const p = document.getElementById('auth-pass').value.trim();
     if (!u || !p) return toast('Please enter your username and password.', 'err');
+
+    const btn = document.getElementById('btn-login');
+    btn.textContent = 'Signing in…';
+    btn.disabled = true;
+
     try {
         const res  = await fetch('/login', {
             method: 'POST',
-            headers: {'Content-Type':'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ username: u, password: p })
         });
         const data = await res.json();
         if (res.ok) { currentUser = u; enterApp(); }
         else toast(data.error || 'Login failed.', 'err');
-    } catch { toast('Could not reach server.', 'err'); }
+    } catch {
+        toast('Could not reach server.', 'err');
+    } finally {
+        btn.textContent = 'Sign In →';
+        btn.disabled = false;
+    }
 }
 
 async function doSignup() {
     const u = document.getElementById('auth-user').value.trim();
     const p = document.getElementById('auth-pass').value.trim();
     if (!u || !p) return toast('Please enter a username and password.', 'err');
+
+    const btn = document.getElementById('btn-signup');
+    btn.textContent = 'Creating…';
+    btn.disabled = true;
+
     try {
         const res  = await fetch('/signup', {
             method: 'POST',
-            headers: {'Content-Type':'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ username: u, password: p })
         });
         const data = await res.json();
         if (res.ok) toast('Account created! You can now sign in.');
         else toast(data.error || 'Signup failed.', 'err');
-    } catch { toast('Could not reach server.', 'err'); }
+    } catch {
+        toast('Could not reach server.', 'err');
+    } finally {
+        btn.textContent = 'Create Account';
+        btn.disabled = false;
+    }
 }
 
 function enterApp() {
@@ -689,9 +667,7 @@ function enterApp() {
 }
 
 async function logout() {
-    try {
-        await fetch('/logout', { method: 'POST', credentials: 'include' });
-    } catch {}
+    try { await fetch('/logout', { method: 'POST', credentials: 'include' }); } catch {}
     currentUser = '';
     leads = [];
     document.getElementById('auth-wrap').classList.remove('hidden');
@@ -701,11 +677,20 @@ async function logout() {
     document.getElementById('auth-pass').value = '';
 }
 
-/* ═══════════════════════════════════════════════════
-   DATA
-═══════════════════════════════════════════════════ */
-async function loadLeads(silent = false) {
-    if (!silent) showSkeletons(3);
+/* ── SESSION CHECK ── */
+async function checkSession() {
+    try {
+        const res = await fetch('/me', { credentials: 'include' });
+        if (res.ok) {
+            const data = await res.json();
+            currentUser = data.username;
+            enterApp();
+        }
+    } catch {}
+}
+
+/* ── DATA ── */
+async function loadLeads() {
     try {
         const res  = await fetch('/leads', { credentials: 'include' });
         const data = await res.json();
@@ -714,8 +699,13 @@ async function loadLeads(silent = false) {
             renderStats();
             view === 'list' ? renderList() : renderKanban();
             loadReminders();
+        } else {
+            toast(data.error || 'Failed to load leads.', 'err');
         }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error('loadLeads error:', e);
+        toast('Could not reach server.', 'err');
+    }
 }
 
 async function addLead() {
@@ -737,12 +727,12 @@ async function addLead() {
     try {
         const res = await fetch('/add-lead', {
             method: 'POST',
-            headers: {'Content-Type':'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ name, source, message, status, notes })
         });
         if (res.ok) {
-            await loadLeads(true);
+            await loadLeads();
         } else {
             leads = leads.filter(l => l.id !== tempId);
             renderStats(); renderList();
@@ -757,38 +747,44 @@ async function addLead() {
 }
 
 async function deleteLead(id) {
-    if (!confirm('Remove this lead? This cannot be undone.')) return;
+  if (!confirm('Remove this lead? This cannot be undone.')) return;
 
-    const card = document.getElementById(`card-${id}`);
-    if (card) {
-        card.classList.add('removing');
-        await new Promise(r => setTimeout(r, 180));
-    }
-    const backup = [...leads];
-    leads = leads.filter(l => l.id !== id);
-    renderStats(); renderList();
-    toast('Lead removed.');
+  const card = document.getElementById(`card-${id}`);
+  if (card) {
+    card.classList.add('removing');
+    await new Promise(r => setTimeout(r, 180));
+  }
 
-    try {
-        const res = await fetch('/remove-lead', {
-            method: 'DELETE',
-            headers: {'Content-Type':'application/json'},
-            credentials: 'include',
-            body: JSON.stringify({ id })
-        });
-        if (!res.ok) {
-            leads = backup; renderStats(); renderList();
-            toast('Delete failed — restored.', 'err');
-        }
-    } catch {
-        leads = backup; renderStats(); renderList();
-        toast('Could not reach server.', 'err');
+  const backup = [...leads];
+  leads = leads.filter(l => String(l.id) !== String(id));
+  renderStats(); renderList();
+  toast('Lead removed.');
+
+  try {
+    const res = await fetch('/remove-lead', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ id })
+    });
+
+    if (res.ok) {
+      await loadLeads(); // pull fresh state from DB
+      return;
     }
+
+    const errData = await res.json().catch(() => ({}));
+    console.error('Delete failed — server said:', res.status, errData);
+    leads = backup; renderStats(); renderList();
+    toast(`Delete failed — ${errData.error || 'server error'} (${res.status})`, 'err');
+  } catch (e) {
+    console.error('Delete network error:', e);
+    leads = backup; renderStats(); renderList();
+    toast('Could not reach server.', 'err');
+  }
 }
 
-/* ═══════════════════════════════════════════════════
-   STATS
-═══════════════════════════════════════════════════ */
+/* ── STATS ── */
 function renderStats() {
     const total     = leads.length;
     const newCount  = leads.filter(l => l.status === 'New').length;
@@ -805,9 +801,7 @@ function renderStats() {
     document.getElementById('s-conversion').textContent = rate + '%';
 }
 
-/* ═══════════════════════════════════════════════════
-   REMINDERS
-═══════════════════════════════════════════════════ */
+/* ── REMINDERS ── */
 async function loadReminders() {
     try {
         const res  = await fetch('/reminders', { credentials: 'include' });
@@ -825,9 +819,7 @@ async function loadReminders() {
     } catch (e) { console.error(e); }
 }
 
-/* ═══════════════════════════════════════════════════
-   VIEW TOGGLE
-═══════════════════════════════════════════════════ */
+/* ── VIEW TOGGLE ── */
 function switchView(v) {
     view = v;
     document.getElementById('pill-list').classList.toggle('active', v === 'list');
@@ -838,9 +830,7 @@ function switchView(v) {
     v === 'kanban' ? renderKanban() : renderList();
 }
 
-/* ═══════════════════════════════════════════════════
-   LIST VIEW
-═══════════════════════════════════════════════════ */
+/* ── LIST VIEW ── */
 function renderList() {
     const statusFilter = document.getElementById('flt-status').value;
     const sortDir      = document.getElementById('flt-sort').value;
@@ -881,9 +871,7 @@ function renderList() {
     }).join('');
 }
 
-/* ═══════════════════════════════════════════════════
-   KANBAN
-═══════════════════════════════════════════════════ */
+/* ── KANBAN ── */
 function renderKanban() {
     ['New','Contacted','Qualified','Closed'].forEach(status => {
         const cards   = leads.filter(l => l.status === status);
@@ -907,9 +895,7 @@ function renderKanban() {
     });
 }
 
-/* ═══════════════════════════════════════════════════
-   DRAG & DROP
-═══════════════════════════════════════════════════ */
+/* ── DRAG & DROP ── */
 function dragStart(e, id) {
     dragId = id;
     e.target.classList.add('dragging');
@@ -937,16 +923,22 @@ async function onDrop(e, newStatus) {
     try {
         const res = await fetch('/update-lead', {
             method: 'PUT',
-            headers: {'Content-Type':'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ id: lead.id, name: lead.name, source: lead.source, message: lead.message, status: newStatus, notes: lead.notes })
+            body: JSON.stringify({
+                id: lead.id, name: lead.name, source: lead.source || '',
+                message: lead.message || '', status: newStatus, notes: lead.notes || ''
+            })
         });
         if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            console.error('Kanban update failed:', res.status, errData);
             lead.status = oldStatus;
             renderKanban(); renderStats();
             toast('Update failed — reverted.', 'err');
         }
-    } catch {
+    } catch (e) {
+        console.error('Kanban drop network error:', e);
         lead.status = oldStatus;
         renderKanban(); renderStats();
         toast('Could not reach server.', 'err');
@@ -954,34 +946,31 @@ async function onDrop(e, newStatus) {
     dragId = null;
 }
 
-/* ═══════════════════════════════════════════════════
-   FOLLOW-UP GENERATOR
-═══════════════════════════════════════════════════ */
+/* ── FOLLOW-UP GENERATOR ── */
 async function genFollowUp(id) {
     const lead = leads.find(l => l.id === id);
     if (!lead) return;
     const box = document.getElementById(`fu-${id}`);
+    if (!box) return;
     box.textContent = 'Generating…';
     box.classList.add('open', 'followup-typing');
     try {
         const res  = await fetch('/generate-followup', {
             method: 'POST',
-            headers: {'Content-Type':'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ name: lead.name, message: lead.message || '' })
         });
         const data = await res.json();
         box.classList.remove('followup-typing');
-        box.textContent = data.followup_text || 'Could not generate follow-up.';
+        box.textContent = data.followup_text || (data.error || 'Could not generate follow-up.');
     } catch {
         box.classList.remove('followup-typing');
         box.textContent = 'Error: could not reach server.';
     }
 }
 
-/* ═══════════════════════════════════════════════════
-   EDIT MODAL
-═══════════════════════════════════════════════════ */
+/* ── EDIT MODAL ── */
 function openEdit(id) {
     const l = leads.find(l => l.id === id);
     if (!l) return;
@@ -1016,7 +1005,7 @@ async function saveEdit() {
     try {
         const res = await fetch('/update-lead', {
             method: 'PUT',
-            headers: {'Content-Type':'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify(payload)
         });
@@ -1036,6 +1025,8 @@ async function saveEdit() {
 document.getElementById('edit-modal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeModal();
 });
+
+checkSession();
 </script>
 </body>
 </html>
