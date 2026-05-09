@@ -32,7 +32,7 @@ It replaces scattered conversations with a simple, structured pipeline so no loa
 ## Tech stack
 * **Backend:** Python, Flask
 * **Database:** PostgreSQL
-* **Frontend:** HTML, CSS, JavaScript
+* **Frontend:** React, HTML, CSS, JavaScript
 * **Deployment:** Render
 
 ## Future Improvements
