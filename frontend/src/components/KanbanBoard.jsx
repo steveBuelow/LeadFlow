@@ -7,23 +7,27 @@ import KanbanColumn from "./KanbanColumn";
 const STATUSES = ["New", "Contacted", "Qualified", "Closed"];
 
 export default function KanbanBoard({ onEdit }) {
-  const [leads, setLeads] = useState([]);
+  const [leads,   setLeads]   = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
 
   useEffect(() => {
     API.get("/leads")
       .then((res) => setLeads(res.data.leads || []))
+      .catch(() => setError("Failed to load leads. Please refresh."))
       .finally(() => setLoading(false));
   }, []);
 
+  // ── FIX: removed confirm() — LeadCard already shows an inline
+  //         "Sure? / Cancel" confirmation before calling onDelete.
+  //         Having confirm() here meant the user was asked twice.
   const handleDelete = async (id) => {
-    if (!confirm("Remove this lead?")) return;
     const backup = [...leads];
     setLeads((prev) => prev.filter((l) => l.id !== id));
     try {
       await API.delete("/remove-lead", { data: { id } });
     } catch {
-      setLeads(backup);   // revert on failure
+      setLeads(backup); // revert on network/server failure
     }
   };
 
@@ -32,7 +36,7 @@ export default function KanbanBoard({ onEdit }) {
     if (!destination) return;
 
     const newStatus = destination.droppableId;
-    const leadId    = parseInt(draggableId);
+    const leadId    = parseInt(draggableId, 10);
     const lead      = leads.find((l) => l.id === leadId);
     if (!lead || lead.status === newStatus) return;
 
@@ -43,22 +47,40 @@ export default function KanbanBoard({ onEdit }) {
 
     try {
       await API.put("/update-lead", {
-        id: lead.id, name: lead.name, source: lead.source,
-        message: lead.message ?? "", status: newStatus, notes: lead.notes ?? "",
+        id:      lead.id,
+        name:    lead.name,
+        source:  lead.source  ?? "",
+        message: lead.message ?? "",
+        status:  newStatus,
+        notes:   lead.notes   ?? "",
       });
-      // optional: call a toast prop here, e.g. onToast(`Moved to ${newStatus}`)
     } catch {
+      // Revert optimistic update on failure
       setLeads((prev) =>
         prev.map((l) => (l.id === leadId ? { ...l, status: oldStatus } : l))
       );
     }
   };
 
-  if (loading) return <p style={{ color: "var(--text-muted)" }}>Loading…</p>;
+  if (loading) {
+    return (
+      <p style={{ color: "var(--text-muted)", padding: "40px 0", textAlign: "center" }}>
+        Loading…
+      </p>
+    );
+  }
+
+  if (error) {
+    return (
+      <p style={{ color: "var(--rose)", padding: "40px 0", textAlign: "center" }}>
+        {error}
+      </p>
+    );
+  }
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+      <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
         {STATUSES.map((status) => (
           <KanbanColumn
             key={status}
