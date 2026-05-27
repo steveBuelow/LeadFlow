@@ -1,149 +1,333 @@
+from __future__ import annotations
+
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
+from typing import Any
 
-from werkzeug.security import check_password_hash, generate_password_hash
+try:
+    import bcrypt  # type: ignore
+except ImportError:  # pragma: no cover - only used in limited envs
+    bcrypt = None
+    from werkzeug.security import check_password_hash, generate_password_hash
 
-from db import get_db
+from db import fetch_all, fetch_one, insert_returning_id, execute_write
 
 
-def _jsonify_row(row: dict) -> dict:
-    """Convert psycopg2/Decimal/datetime values into JSON-safe primitives."""
-    out = dict(row)
-    for k, v in list(out.items()):
-        if isinstance(v, Decimal):
-            out[k] = float(v)
-        elif hasattr(v, "isoformat"):
-            out[k] = v.isoformat()
+if bcrypt is not None:
+    _DUMMY_HASH = bcrypt.hashpw(b"not-the-password", bcrypt.gensalt(rounds=12))
+else:  # pragma: no cover - only used when bcrypt is missing
+    _DUMMY_HASH = generate_password_hash("not-the-password")
+
+
+def utc_now() -> datetime:
+    return datetime.now(UTC).replace(microsecond=0)
+
+
+def utc_now_iso() -> str:
+    return utc_now().isoformat().replace("+00:00", "Z")
+
+
+def _jsonify_row(row: dict[str, Any]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for key, value in row.items():
+        if isinstance(value, Decimal):
+            out[key] = float(value)
+        elif isinstance(value, datetime):
+            out[key] = value.astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        elif isinstance(value, date):
+            out[key] = value.isoformat()
+        else:
+            out[key] = value
     return out
 
 
-# ── USERS ─────────────────────────────────────────────────────────────────────
-
-
-def create_user(username: str, password: str) -> None:
-    username = (username or "").strip()
-    password = password or ""
-    if not username or not password:
-        raise ValueError("Username and password are required")
-
-    hashed = generate_password_hash(password)
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO users (username, password) VALUES (%s, %s)",
-                (username, hashed),
-            )
-        conn.commit()
-    # IntegrityError (duplicate username) is intentionally NOT caught here;
-    # it bubbles up to the route which returns a 409.
-
-
-def find_user(username: str, password: str) -> dict | None:
-    username = (username or "").strip()
-    password = password or ""
-    if not username or not password:
+def _parse_dt(value: Any) -> datetime | None:
+    if not value:
         return None
+    if isinstance(value, datetime):
+        return value.astimezone(UTC) if value.tzinfo else value.replace(tzinfo=UTC)
+    raw = str(value).replace("Z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    return dt.astimezone(UTC) if dt.tzinfo else dt.replace(tzinfo=UTC)
 
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id, username, password FROM users WHERE username = %s",
-                (username,),
-            )
-            user = cur.fetchone()
 
-    if user and check_password_hash(user["password"], password):
-        return {"id": user["id"], "username": user["username"]}
+def _hash_password(password: str) -> str:
+    if bcrypt is not None:
+        return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=13)).decode("utf-8")
+    return generate_password_hash(password, method="pbkdf2:sha256:600000")  # pragma: no cover
+
+
+def _verify_password(password: str, password_hash: str) -> bool:
+    if bcrypt is not None:
+        try:
+            return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+        except Exception:
+            return False
+    return check_password_hash(password_hash, password)  # pragma: no cover
+
+
+def create_user(username: str, email: str, password: str) -> int:
+    return insert_returning_id(
+        """
+        INSERT INTO users (username, email, password, created_at, is_active)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (username, email, _hash_password(password), utc_now_iso(), 1),
+    )
+
+
+def find_user_by_credentials(login: str, password: str) -> dict[str, Any] | None:
+    row = fetch_one(
+        """
+        SELECT id, username, email, password
+        FROM users
+        WHERE (username = %s OR email = %s) AND is_active = %s
+        LIMIT 1
+        """,
+        (login, login, 1),
+    )
+
+    if bcrypt is not None:
+        stored = row["password"].encode("utf-8") if row else _DUMMY_HASH
+        try:
+            matched = bcrypt.checkpw(password.encode("utf-8"), stored)
+        except Exception:
+            matched = False
+    else:  # pragma: no cover
+        stored = row["password"] if row else _DUMMY_HASH
+        matched = check_password_hash(stored, password)
+
+    if row and matched:
+        return {"id": int(row["id"]), "username": str(row["username"]), "email": str(row["email"])}
     return None
 
 
-def get_user_by_id(user_id: int) -> dict | None:
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id, username FROM users WHERE id = %s",
-                (user_id,),
-            )
-            row = cur.fetchone()
-    return dict(row) if row else None
+def find_user_by_id(user_id: int) -> dict[str, Any] | None:
+    row = fetch_one(
+        """
+        SELECT id, username, email, last_login, created_at
+        FROM users
+        WHERE id = %s AND is_active = %s
+        LIMIT 1
+        """,
+        (user_id, 1),
+    )
+    return _jsonify_row(row) if row else None
 
 
-# ── LEADS ─────────────────────────────────────────────────────────────────────
+def update_last_login(user_id: int) -> None:
+    execute_write("UPDATE users SET last_login = %s WHERE id = %s", (utc_now_iso(), user_id))
 
 
-def list_leads(user_id: int) -> list[dict]:
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, name, source, message, status, notes, created_at
-                FROM   leads
-                WHERE  user_id = %s
-                ORDER  BY created_at DESC
-                """,
-                (user_id,),
-            )
-            rows = cur.fetchall()
-    return [_jsonify_row(r) for r in rows]
+def username_exists(username: str) -> bool:
+    return fetch_one("SELECT 1 AS found FROM users WHERE username = %s LIMIT 1", (username,)) is not None
 
 
-def create_lead(
-    name: str,
-    source: str,
-    message: str,
-    status: str,
-    notes: str,
-    user_id: int,
-) -> int:
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO leads (name, source, message, status, notes, user_id)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING id
-                """,
-                (name, source, message, status, notes, user_id),
-            )
-            new_id = cur.fetchone()["id"]
-        conn.commit()
-    return new_id
+def email_exists(email: str) -> bool:
+    return fetch_one("SELECT 1 AS found FROM users WHERE email = %s LIMIT 1", (email,)) is not None
+
+
+_LEAD_COLUMNS = """
+    id, user_id, name, company, email, phone, source, status, priority,
+    value, message, notes, next_followup, ai_score, ai_summary, ai_category,
+    created_at, updated_at
+"""
+
+
+def list_leads(user_id: int, status: str | None = None) -> list[dict[str, Any]]:
+    params: list[Any] = [user_id]
+    query = f"SELECT {_LEAD_COLUMNS} FROM leads WHERE user_id = %s"
+    if status and status != "All":
+        query += " AND status = %s"
+        params.append(status)
+    query += " ORDER BY created_at DESC, id DESC"
+    rows = fetch_all(query, tuple(params))
+    return [_jsonify_row(row) for row in rows]
+
+
+def get_lead(lead_id: int, user_id: int) -> dict[str, Any] | None:
+    row = fetch_one(
+        f"SELECT {_LEAD_COLUMNS} FROM leads WHERE id = %s AND user_id = %s LIMIT 1",
+        (lead_id, user_id),
+    )
+    return _jsonify_row(row) if row else None
+
+
+def create_lead(data: dict[str, Any], user_id: int) -> int:
+    now = utc_now_iso()
+    return insert_returning_id(
+        """
+        INSERT INTO leads (
+            user_id, name, company, email, phone, source, status, priority,
+            value, message, notes, next_followup, created_at, updated_at
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            user_id,
+            data["name"],
+            data.get("company"),
+            data.get("email"),
+            data.get("phone"),
+            data.get("source"),
+            data.get("status"),
+            data.get("priority"),
+            data.get("value"),
+            data.get("message"),
+            data.get("notes"),
+            data.get("next_followup"),
+            now,
+            now,
+        ),
+    )
+
+
+def update_lead(lead_id: int, user_id: int, data: dict[str, Any]) -> bool:
+    updated = execute_write(
+        """
+        UPDATE leads SET
+            name = %s,
+            company = %s,
+            email = %s,
+            phone = %s,
+            source = %s,
+            status = %s,
+            priority = %s,
+            value = %s,
+            message = %s,
+            notes = %s,
+            next_followup = %s,
+            updated_at = %s
+        WHERE id = %s AND user_id = %s
+        """,
+        (
+            data["name"],
+            data.get("company"),
+            data.get("email"),
+            data.get("phone"),
+            data.get("source"),
+            data.get("status"),
+            data.get("priority"),
+            data.get("value"),
+            data.get("message"),
+            data.get("notes"),
+            data.get("next_followup"),
+            utc_now_iso(),
+            lead_id,
+            user_id,
+        ),
+    )
+    return updated > 0
+
+
+def update_lead_status(lead_id: int, user_id: int, status: str) -> bool:
+    updated = execute_write(
+        "UPDATE leads SET status = %s, updated_at = %s WHERE id = %s AND user_id = %s",
+        (status, utc_now_iso(), lead_id, user_id),
+    )
+    return updated > 0
 
 
 def delete_lead(lead_id: int, user_id: int) -> bool:
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "DELETE FROM leads WHERE id = %s AND user_id = %s",
-                (lead_id, user_id),
-            )
-            deleted = cur.rowcount > 0
-        conn.commit()
-    return deleted
+    return execute_write("DELETE FROM leads WHERE id = %s AND user_id = %s", (lead_id, user_id)) > 0
 
 
-def update_lead(
+def lead_stats(user_id: int) -> dict[str, Any]:
+    leads = list_leads(user_id)
+    total = len(leads)
+    new_count = sum(1 for lead in leads if lead["status"] == "New")
+    qualified = sum(1 for lead in leads if lead["status"] == "Qualified")
+    closed_won = [lead for lead in leads if lead["status"] == "Closed-Won"]
+    closed_lost = [lead for lead in leads if lead["status"] == "Closed-Lost"]
+    pipeline_total = round(sum(float(lead.get("value") or 0) for lead in leads), 2)
+    pipeline_won = round(sum(float(lead.get("value") or 0) for lead in closed_won), 2)
+    added_this_week = 0
+    overdue = 0
+    now = utc_now()
+
+    for lead in leads:
+        created_at = _parse_dt(lead.get("created_at"))
+        if created_at and created_at >= now - timedelta(days=7):
+            added_this_week += 1
+        followup = lead.get("next_followup")
+        if followup and lead["status"] not in {"Closed-Won", "Closed-Lost"}:
+            try:
+                followup_date = date.fromisoformat(str(followup))
+            except ValueError:
+                continue
+            if followup_date <= now.date():
+                overdue += 1
+
+    won_rate = round((len(closed_won) / total) * 100, 1) if total else 0.0
+    return {
+        "total": total,
+        "new_count": new_count,
+        "qualified": qualified,
+        "closed_won": len(closed_won),
+        "closed_lost": len(closed_lost),
+        "pipeline_total": pipeline_total,
+        "pipeline_won": pipeline_won,
+        "added_this_week": added_this_week,
+        "overdue_followups": overdue,
+        "won_rate": won_rate,
+    }
+
+
+def stale_leads(user_id: int, days: int = 7) -> list[dict[str, Any]]:
+    threshold = utc_now() - timedelta(days=days)
+    results: list[dict[str, Any]] = []
+    for lead in list_leads(user_id, status="New"):
+        created_at = _parse_dt(lead.get("created_at"))
+        if created_at and created_at < threshold:
+            results.append({
+                "id": lead["id"],
+                "name": lead["name"],
+                "source": lead.get("source"),
+                "created_at": lead.get("created_at"),
+            })
+    return results[:20]
+
+
+def overdue_followups(user_id: int) -> list[dict[str, Any]]:
+    today = utc_now().date()
+    results: list[dict[str, Any]] = []
+    for lead in list_leads(user_id):
+        if lead["status"] in {"Closed-Won", "Closed-Lost"} or not lead.get("next_followup"):
+            continue
+        try:
+            followup_date = date.fromisoformat(str(lead["next_followup"]))
+        except ValueError:
+            continue
+        if followup_date <= today:
+            results.append({
+                "id": lead["id"],
+                "name": lead["name"],
+                "next_followup": lead["next_followup"],
+                "status": lead["status"],
+            })
+    results.sort(key=lambda row: row["next_followup"])
+    return results[:20]
+
+
+def update_ai_fields(
     lead_id: int,
     user_id: int,
-    name: str,
-    source: str,
-    message: str,
-    status: str,
-    notes: str,
+    score: int | None = None,
+    summary: str | None = None,
+    category: str | None = None,
 ) -> bool:
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                UPDATE leads
-                SET  name    = %s,
-                     source  = %s,
-                     message = %s,
-                     status  = %s,
-                     notes   = %s
-                WHERE id = %s AND user_id = %s
-                """,
-                (name, source, message, status, notes, lead_id, user_id),
-            )
-            updated = cur.rowcount > 0
-        conn.commit()
-    return updated
+    updated = execute_write(
+        """
+        UPDATE leads SET
+            ai_score = COALESCE(%s, ai_score),
+            ai_summary = COALESCE(%s, ai_summary),
+            ai_category = COALESCE(%s, ai_category),
+            updated_at = %s
+        WHERE id = %s AND user_id = %s
+        """,
+        (score, summary, category, utc_now_iso(), lead_id, user_id),
+    )
+    return updated > 0

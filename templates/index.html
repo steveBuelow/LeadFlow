@@ -1,1137 +1,272 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeadFlow — CRM</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg:          #f4f5f9;
-            --surface:     #ffffff;
-            --surface2:    #f0f1f7;
-            --border:      #e4e6ef;
-            --border-hi:   #c7cbdf;
-
-            --accent:      #4f46e5;
-            --accent-dim:  rgba(79,70,229,0.08);
-            --accent-glow: rgba(79,70,229,0.15);
-
-            --amber:       #d97706;
-            --amber-dim:   rgba(217,119,6,0.09);
-            --violet:      #7c3aed;
-            --violet-dim:  rgba(124,58,237,0.08);
-            --rose:        #e11d48;
-            --rose-dim:    rgba(225,29,72,0.08);
-
-            --text:        #111827;
-            --text-muted:  #6b7280;
-            --text-subtle: #c4c8d8;
-
-            --radius:      12px;
-            --radius-sm:   8px;
-
-            --shadow-sm:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow:     0 2px 8px rgba(0,0,0,0.07), 0 4px 20px rgba(0,0,0,0.04);
-            --shadow-lg:  0 8px 30px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            /* Subtle dot-grid background */
-            background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px);
-            background-size: 24px 24px;
-            background-attachment: fixed;
-        }
-
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-        .shell { display: flex; flex-direction: column; min-height: 100vh; }
-
-        /* ── HEADER ── */
-        .header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 28px; height: 56px;
-            border-bottom: 1px solid var(--border);
-            position: sticky; top: 0; z-index: 100;
-            background: rgba(255,255,255,0.92);
-            backdrop-filter: blur(16px);
-            box-shadow: var(--shadow-sm);
-        }
-        .logo-mark { display: flex; align-items: center; gap: 10px; }
-        .logo-icon {
-            width: 30px; height: 30px;
-            background: var(--accent);
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px;
-            box-shadow: 0 2px 8px rgba(79,70,229,0.35);
-        }
-        .logo-text {
-            font-family: 'DM Serif Display', serif;
-            font-size: 18px;
-            letter-spacing: -0.3px;
-            color: var(--text);
-        }
-        .logo-text em { color: var(--accent); font-style: normal; }
-
-        .header-right { display: flex; align-items: center; gap: 8px; }
-        .user-chip {
-            font-size: 12px; font-weight: 500; color: var(--text-muted);
-            padding: 5px 13px; border-radius: 20px;
-            border: 1px solid var(--border);
-            background: var(--surface2);
-        }
-        .btn-logout {
-            font-size: 12px; font-weight: 500; color: var(--text-muted);
-            background: transparent; border: 1px solid transparent;
-            padding: 5px 11px; border-radius: 20px;
-            cursor: pointer; font-family: 'DM Sans', sans-serif;
-            transition: color 0.15s, background 0.15s;
-        }
-        .btn-logout:hover { color: var(--rose); background: var(--rose-dim); }
-
-        .main { flex: 1; padding: 28px 28px 60px; max-width: 1360px; margin: 0 auto; width: 100%; }
-
-        /* ── AUTH ── */
-        #auth-wrap {
-            display: flex; justify-content: center; align-items: center;
-            min-height: calc(100vh - 56px); padding: 20px;
-        }
-        .auth-card {
-            width: 100%; max-width: 360px;
-            background: var(--surface);
-            border-radius: 16px;
-            padding: 36px 32px;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border);
-            animation: fadeUp 0.3s ease;
-        }
-        .auth-eyebrow {
-            font-size: 11px; font-weight: 700; color: var(--accent);
-            letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;
-        }
-        .auth-title {
-            font-family: 'DM Serif Display', serif;
-            font-size: 26px; letter-spacing: -0.3px;
-            margin-bottom: 28px; color: var(--text);
-        }
-        .form-group { margin-bottom: 16px; }
-        label {
-            font-size: 11px; color: var(--text-muted); font-weight: 700;
-            display: block; margin-bottom: 6px; letter-spacing: 0.06em; text-transform: uppercase;
-        }
-
-        /* ── INPUTS ── */
-        input, textarea, select {
-            width: 100%; padding: 10px 0;
-            background: transparent;
-            border: none; border-bottom: 1.5px solid var(--border);
-            color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
-            transition: border-color 0.15s;
-            outline: none; appearance: none; border-radius: 0;
-        }
-        input:focus, textarea:focus, select:focus { border-bottom-color: var(--accent); }
-        select option { background: var(--surface); color: var(--text); }
-        ::placeholder { color: var(--text-subtle); }
-
-        .app-form input, .app-form textarea, .app-form select {
-            padding: 9px 12px;
-            background: var(--surface2);
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            color: var(--text);
-        }
-        .app-form input:focus, .app-form textarea:focus, .app-form select:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-            background: var(--surface);
-        }
-        textarea { resize: vertical; min-height: 68px; }
-
-        /* ── BUTTONS ── */
-        .btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 10px 20px; border-radius: var(--radius-sm); border: none;
-            font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
-            cursor: pointer; transition: all 0.15s;
-            letter-spacing: 0.01em;
-        }
-        .btn:active { transform: scale(0.97); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .btn-primary {
-            background: var(--accent); color: #fff;
-            box-shadow: 0 2px 8px rgba(79,70,229,0.3);
-        }
-        .btn-primary:hover:not(:disabled) {
-            background: #4338ca;
-            box-shadow: 0 4px 16px rgba(79,70,229,0.4);
-        }
-        .btn-ghost {
-            background: var(--surface2); color: var(--text-muted);
-            border: 1.5px solid var(--border);
-        }
-        .btn-ghost:hover:not(:disabled) { border-color: var(--border-hi); color: var(--text); }
-        .btn-sm { padding: 5px 12px; font-size: 11.5px; border-radius: 6px; }
-        .btn-danger { background: var(--rose-dim);   color: var(--rose);   border: 1.5px solid rgba(225,29,72,0.2); }
-        .btn-info   { background: var(--accent-dim); color: var(--accent); border: 1.5px solid rgba(79,70,229,0.18); }
-        .btn-edit   { background: var(--violet-dim); color: var(--violet); border: 1.5px solid rgba(124,58,237,0.18); }
-        .btn-danger:hover { background: rgba(225,29,72,0.14); }
-        .btn-info:hover   { background: rgba(79,70,229,0.14); }
-        .btn-edit:hover   { background: rgba(124,58,237,0.13); }
-
-        .auth-row { display: flex; gap: 8px; margin-top: 28px; }
-        .auth-row .btn { flex: 1; justify-content: center; }
-
-        /* ── STATS BAR ── */
-        .stats-bar {
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            gap: 14px; margin-bottom: 22px;
-        }
-        .stat-tile {
-            padding: 20px 22px;
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-            transition: box-shadow 0.2s, transform 0.2s;
-        }
-        .stat-tile:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
-        .stat-tile::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; height: 3px;
-            background: var(--tile-accent, var(--accent));
-            border-radius: var(--radius) var(--radius) 0 0;
-        }
-        .stat-tile.t-accent { --tile-accent: var(--accent); }
-        .stat-tile.t-amber  { --tile-accent: var(--amber);  }
-        .stat-tile.t-violet { --tile-accent: var(--violet); }
-        .stat-tile.t-rose   { --tile-accent: var(--rose);   }
-        .stat-num {
-            font-family: 'DM Mono', monospace;
-            font-size: 32px; font-weight: 500; line-height: 1; margin-bottom: 6px;
-        }
-        .t-accent .stat-num { color: var(--accent); }
-        .t-amber  .stat-num { color: var(--amber);  }
-        .t-violet .stat-num { color: var(--violet); }
-        .t-rose   .stat-num { color: var(--rose);   }
-        .stat-label {
-            font-size: 11px; color: var(--text-muted);
-            text-transform: uppercase; letter-spacing: 0.09em; font-weight: 700;
-        }
-        .stat-sub   { font-size: 11px; color: var(--text-subtle); margin-top: 3px; }
-
-        /* ── TOOLBAR ── */
-        .toolbar {
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
-        }
-        .toolbar-right { display: flex; gap: 8px; flex-wrap: wrap; }
-        .view-pills {
-            display: flex;
-            background: var(--surface);
-            border: 1.5px solid var(--border);
-            border-radius: 9px; padding: 3px; gap: 2px;
-            box-shadow: var(--shadow-sm);
-        }
-        .pill {
-            background: transparent; border: none; color: var(--text-muted);
-            font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
-            padding: 6px 14px; border-radius: 6px; cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-        }
-        .pill.active {
-            background: var(--accent); color: #fff;
-            box-shadow: 0 1px 4px rgba(79,70,229,0.3);
-        }
-        .filter-select {
-            width: auto; min-width: 138px; padding: 7px 11px; font-size: 13px;
-            background: var(--surface); border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm); color: var(--text);
-            outline: none; appearance: none; cursor: pointer;
-            box-shadow: var(--shadow-sm); font-family: 'DM Sans', sans-serif;
-        }
-
-        /* ── ADD PANEL ── */
-        .add-panel {
-            background: var(--surface);
-            border-top: 3px solid var(--accent);
-            border-radius: var(--radius);
-            padding: 22px 24px; margin-bottom: 22px;
-            box-shadow: var(--shadow);
-        }
-        .panel-title {
-            font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.1em;
-            color: var(--accent); margin-bottom: 16px;
-        }
-        .add-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-        .add-grid-wide { grid-column: span 2; }
-
-        /* ── REMINDERS ── */
-        .reminder-strip {
-            border-left: 3px solid var(--amber);
-            border-radius: var(--radius); padding: 14px 18px; margin-bottom: 18px;
-            background: var(--surface);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid rgba(217,119,6,0.18);
-            border-left-width: 3px;
-        }
-        .reminder-strip h4 {
-            font-size: 11px; font-weight: 700; color: var(--amber);
-            text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 8px;
-        }
-        .reminder-strip li {
-            font-size: 13px; color: var(--text-muted);
-            margin-left: 16px; margin-top: 4px; line-height: 1.55;
-        }
-        .reminder-strip strong { color: var(--text); }
-
-        /* ── LEAD CARD ── */
-        .lead-card {
-            background: var(--surface);
-            border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px;
-            display: flex; align-items: flex-start; gap: 14px;
-            border: 1px solid var(--border);
-            border-left: 3px solid transparent;
-            box-shadow: var(--shadow-sm);
-            transition: box-shadow 0.18s, border-color 0.18s, transform 0.15s;
-            animation: fadeUp 0.2s ease;
-        }
-        .lead-card:hover {
-            box-shadow: var(--shadow);
-            border-left-color: var(--accent);
-            transform: translateX(2px);
-        }
-        .lead-card.removing {
-            opacity: 0; transform: translateX(-14px);
-            transition: opacity 0.2s, transform 0.2s;
-        }
-        .lead-main { flex: 1; min-width: 0; }
-        .lead-name {
-            font-family: 'DM Sans', sans-serif;
-            font-weight: 700; font-size: 15px; color: var(--text);
-        }
-        .lead-source { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-        .lead-meta   { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-        .lead-message {
-            font-size: 12.5px; color: var(--text-muted); margin-top: 10px;
-            line-height: 1.6; padding-top: 10px; border-top: 1px solid var(--border);
-            white-space: pre-wrap;
-        }
-        .lead-notes  {
-            font-size: 12px; color: var(--text-muted);
-            margin-top: 6px; font-style: italic;
-        }
-        .lead-date   {
-            font-size: 11px; color: var(--text-subtle);
-            font-family: 'DM Mono', monospace;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .badge {
-            font-size: 10.5px; font-weight: 700;
-            padding: 3px 10px; border-radius: 20px;
-            text-transform: uppercase; letter-spacing: 0.06em;
-        }
-        .badge-New       { background: var(--accent-dim); color: var(--accent); }
-        .badge-Contacted { background: var(--amber-dim);  color: var(--amber);  }
-        .badge-Qualified { background: var(--violet-dim); color: var(--violet); }
-        .badge-Closed    { background: var(--surface2); color: var(--text-muted); }
-
-        .source-tag {
-            font-size: 10.5px; font-weight: 600;
-            padding: 3px 9px; border-radius: 5px;
-            text-transform: uppercase; letter-spacing: 0.05em;
-            background: var(--surface2); color: var(--text-muted);
-            border: 1px solid var(--border);
-        }
-
-        .card-actions {
-            display: flex; flex-direction: column; gap: 5px;
-            flex-shrink: 0; opacity: 0; transition: opacity 0.15s;
-        }
-        .lead-card:hover .card-actions { opacity: 1; }
-
-        .followup-box {
-            margin-top: 11px; font-size: 12.5px;
-            line-height: 1.65; white-space: pre-wrap;
-            border-left: 2px solid var(--accent);
-            padding: 11px 14px; color: var(--text-muted); display: none;
-            background: var(--accent-dim);
-            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-        }
-        .followup-box.open { display: block; animation: fadeUp 0.2s ease; }
-        .followup-typing::after { content: '▋'; animation: blink 0.8s step-end infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        /* ── KANBAN ── */
-        .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: start; }
-        .k-col {
-            background: var(--surface);
-            border-radius: var(--radius); min-height: 240px;
-            border-top: 3px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border);
-            border-top-width: 3px;
-            transition: border-color 0.15s, box-shadow 0.15s;
-        }
-        .k-col.col-New       { border-top-color: var(--accent); }
-        .k-col.col-Contacted { border-top-color: var(--amber);  }
-        .k-col.col-Qualified { border-top-color: var(--violet); }
-        .k-col.col-Closed    { border-top-color: var(--text-subtle); }
-        .k-col.over { background: var(--surface2); box-shadow: var(--shadow); }
-        .k-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 13px 14px; border-bottom: 1px solid var(--border);
-        }
-        .k-label {
-            display: flex; align-items: center; gap: 7px;
-            font-family: 'DM Sans', sans-serif; font-size: 11.5px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.08em;
-        }
-        .k-dot { width: 7px; height: 7px; border-radius: 50%; }
-        .k-count {
-            font-family: 'DM Mono', monospace;
-            font-size: 11px; color: var(--text-muted);
-            background: var(--surface2); border: 1px solid var(--border);
-            padding: 1px 9px; border-radius: 20px;
-        }
-        .k-col.col-New       .k-label { color: var(--accent); }
-        .k-col.col-New       .k-dot   { background: var(--accent); }
-        .k-col.col-Contacted .k-label { color: var(--amber); }
-        .k-col.col-Contacted .k-dot   { background: var(--amber); }
-        .k-col.col-Qualified .k-label { color: var(--violet); }
-        .k-col.col-Qualified .k-dot   { background: var(--violet); }
-        .k-col.col-Closed    .k-label { color: var(--text-muted); }
-        .k-col.col-Closed    .k-dot   { background: var(--border-hi); }
-        .k-cards { padding: 10px; min-height: 80px; }
-        .k-card {
-            background: var(--surface2);
-            border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px;
-            cursor: grab; user-select: none;
-            border: 1px solid var(--border);
-            transition: transform 0.15s, box-shadow 0.15s;
-        }
-        .k-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-            background: var(--surface);
-        }
-        .k-card.dragging { opacity: 0.3; cursor: grabbing; }
-        .k-card-name   { font-weight: 700; font-size: 13px; color: var(--text); }
-        .k-card-source { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-        .k-card-snippet { font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.45; }
-        .k-card-date   {
-            font-size: 10px; color: var(--text-subtle);
-            font-family: 'DM Mono', monospace;
-            margin-top: 9px;
-        }
-        .k-empty {
-            font-size: 12px; color: var(--text-subtle);
-            text-align: center; padding: 28px 10px;
-        }
-
-        /* ── MODAL ── */
-        .modal-overlay {
-            position: fixed; inset: 0;
-            background: rgba(17,24,39,0.45);
-            backdrop-filter: blur(8px);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 200; padding: 20px;
-        }
-        .modal-card {
-            background: var(--surface);
-            border-top: 3px solid var(--accent);
-            border-radius: var(--radius);
-            padding: 28px 28px 22px;
-            width: 100%; max-width: 500px;
-            box-shadow: var(--shadow-lg);
-            animation: fadeUp 0.22s ease;
-        }
-        .modal-title {
-            font-family: 'DM Serif Display', serif;
-            font-size: 18px; margin-bottom: 20px; color: var(--text);
-        }
-        .modal-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .modal-footer { display: flex; gap: 8px; margin-top: 18px; }
-
-        /* ── TOAST ── */
-        #toast {
-            position: fixed; bottom: 24px; right: 24px; z-index: 300;
-            background: var(--surface);
-            border-radius: 10px; padding: 12px 18px;
-            font-size: 13px; font-weight: 700;
-            border-left: 3px solid var(--accent);
-            box-shadow: var(--shadow-lg);
-            transform: translateY(50px); opacity: 0;
-            transition: transform 0.22s ease, opacity 0.22s ease;
-            pointer-events: none;
-        }
-        #toast.show  { transform: translateY(0); opacity: 1; }
-        #toast.t-ok  { border-left-color: var(--accent); color: var(--accent); }
-        #toast.t-err { border-left-color: var(--rose);   color: var(--rose); }
-
-        /* ── UTIL ── */
-        .hidden { display: none !important; }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── RESPONSIVE ── */
-        @media (max-width: 1100px) { .stats-bar { grid-template-columns: repeat(2, 1fr); } .board { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 800px)  { .add-grid { grid-template-columns: 1fr 1fr; } .add-grid-wide { grid-column: span 2; } .modal-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 600px)  { .board { grid-template-columns: 1fr; } .add-grid { grid-template-columns: 1fr; } .add-grid-wide { grid-column: span 1; } .card-actions { opacity: 1; } .stats-bar { grid-template-columns: repeat(2, 1fr); } }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <title>LeadFlow — CRM Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
-<div class="shell">
-
-    <!-- HEADER -->
-    <header class="header">
-        <div class="logo-mark">
-            <div class="logo-icon">⚡</div>
-            <div class="logo-text">Lead<em>Flow</em></div>
-        </div>
-        <div class="header-right" id="header-user" style="display:none;">
-            <span class="user-chip" id="username-display"></span>
-            <button class="btn-logout" onclick="logout()">Sign out</button>
-        </div>
-    </header>
-
-    <!-- AUTH -->
-    <div id="auth-wrap">
-        <div class="auth-card">
-            <div class="auth-eyebrow">CRM Dashboard</div>
-            <div class="auth-title">Welcome back 👋</div>
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="auth-user" placeholder="your username" autocomplete="username">
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="auth-pass" placeholder="your password" autocomplete="current-password"
-                    onkeydown="if(event.key==='Enter') doLogin()">
-            </div>
-            <div class="auth-row">
-                <button class="btn btn-ghost" id="btn-signup" onclick="doSignup()">Create Account</button>
-                <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Sign In →</button>
-            </div>
-        </div>
+  <header class="header">
+    <div class="logo">
+      <div class="logo-mark">◌</div>
+      <div>
+        <div class="logo-name">LeadFlow</div>
+        <div class="logo-sub">Pipeline command center</div>
+      </div>
     </div>
+    <div class="header-actions">
+      <div class="user-pill hidden" id="user-pill">
+        <span class="user-dot" id="user-initial">?</span>
+        <span id="user-label">Guest</span>
+      </div>
+      <button class="btn btn-ghost btn-sm hidden" id="logout-btn" type="button">Sign out</button>
+    </div>
+  </header>
 
-    <!-- MAIN APP -->
-    <main class="main hidden" id="app">
+  <main>
+    <section class="auth-shell" id="auth-view">
+      <div class="auth-card">
+        <div class="auth-eyebrow">Secure CRM</div>
+        <h1 class="auth-title" id="auth-title">Welcome back</h1>
+        <p class="auth-copy" id="auth-copy">Sign in to manage leads, reminders, and future AI workflows.</p>
 
-        <!-- ADD LEAD -->
-        <div class="add-panel app-form">
-            <div class="panel-title">+ New Lead</div>
-            <div class="add-grid">
-                <input type="text" id="f-name"    placeholder="Contact Name *" class="add-grid-wide">
-                <input type="text" id="f-source"  placeholder="Source  (e.g. Referral, Website)">
-                <select id="f-status">
-                    <option value="New">New</option>
-                    <option value="Contacted">Contacted</option>
-                    <option value="Qualified">Qualified</option>
-                    <option value="Closed">Closed</option>
-                </select>
-                <textarea id="f-message" placeholder="Initial message / inquiry…" style="margin:0;" class="add-grid-wide"></textarea>
-                <textarea id="f-notes"   placeholder="Internal notes…" style="margin:0;" class="add-grid-wide"></textarea>
-            </div>
-            <button class="btn btn-primary" onclick="addLead()">Add Lead</button>
+        <form id="auth-form" novalidate>
+          <div class="form-group">
+            <label class="label" for="auth-username">Username or Email</label>
+            <input class="input" id="auth-username" name="username" type="text" maxlength="254" autocomplete="username">
+          </div>
+          <div class="form-group hidden" id="register-email-group">
+            <label class="label" for="auth-email">Email</label>
+            <input class="input" id="auth-email" name="email" type="email" maxlength="254" autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label class="label" for="auth-password">Password</label>
+            <input class="input" id="auth-password" name="password" type="password" maxlength="72" autocomplete="current-password">
+          </div>
+          <button class="btn btn-primary btn-full" id="auth-submit" type="submit">Sign in</button>
+        </form>
+
+        <div class="auth-footer">
+          <span id="auth-toggle-text">Need an account?</span>
+          <button class="link-button" id="auth-toggle-btn" type="button">Create one</button>
         </div>
+      </div>
+    </section>
 
-        <!-- STATS -->
-        <div class="stats-bar">
-            <div class="stat-tile t-accent">
-                <div class="stat-num" id="s-total">—</div>
-                <div class="stat-label">Total Leads</div>
-                <div class="stat-sub" id="s-week">—</div>
-            </div>
-            <div class="stat-tile t-amber">
-                <div class="stat-num" id="s-new">—</div>
-                <div class="stat-label">New</div>
-                <div class="stat-sub">awaiting contact</div>
-            </div>
-            <div class="stat-tile t-violet">
-                <div class="stat-num" id="s-qualified">—</div>
-                <div class="stat-label">Qualified</div>
-                <div class="stat-sub">ready to close</div>
-            </div>
-            <div class="stat-tile t-rose">
-                <div class="stat-num" id="s-conversion">—</div>
-                <div class="stat-label">Closed Rate</div>
-                <div class="stat-sub">of total leads</div>
-            </div>
+    <section class="app-shell hidden" id="app-view">
+      <div class="hero">
+        <div>
+          <p class="hero-kicker">CRM Dashboard</p>
+          <h1 class="hero-title" id="hero-title">Good day</h1>
+          <p class="hero-subtitle" id="hero-subtitle">Monitor the pipeline, ship follow-ups, and prepare for AI automation.</p>
         </div>
-
-        <!-- REMINDERS -->
-        <div id="reminder-strip" class="reminder-strip hidden">
-            <h4>⚠ Follow-up Reminders</h4>
-            <ul id="reminder-items"></ul>
+        <div class="hero-panel">
+          <div class="hero-panel-title">Automation Roadmap</div>
+          <div class="hero-chips">
+            <span class="chip">Sponsorship triage</span>
+            <span class="chip">Application scoring</span>
+            <span class="chip">Inquiry routing</span>
+            <span class="chip">Meeting summaries</span>
+            <span class="chip">Auto-reporting</span>
+          </div>
         </div>
+      </div>
 
-        <!-- TOOLBAR -->
-        <div class="toolbar">
-            <div class="view-pills">
-                <button class="pill active" id="pill-list"   onclick="switchView('list')">☰ List</button>
-                <button class="pill"         id="pill-kanban" onclick="switchView('kanban')">⊞ Board</button>
+      <div class="stats-grid">
+        <article class="stat-card accent-teal">
+          <div class="stat-label">Total Leads</div>
+          <div class="stat-value" id="s-total">0</div>
+          <div class="stat-sub" id="s-week">0 added this week</div>
+        </article>
+        <article class="stat-card accent-blue">
+          <div class="stat-label">New</div>
+          <div class="stat-value" id="s-new">0</div>
+          <div class="stat-sub">awaiting first touch</div>
+        </article>
+        <article class="stat-card accent-purple">
+          <div class="stat-label">Qualified</div>
+          <div class="stat-value" id="s-qualified">0</div>
+          <div class="stat-sub">highest intent leads</div>
+        </article>
+        <article class="stat-card accent-gold">
+          <div class="stat-label">Pipeline</div>
+          <div class="stat-value stat-money" id="s-pipeline">$0</div>
+          <div class="stat-sub">open and closed value</div>
+        </article>
+        <article class="stat-card accent-green">
+          <div class="stat-label">Won Revenue</div>
+          <div class="stat-value stat-money" id="s-won">$0</div>
+          <div class="stat-sub">closed won total</div>
+        </article>
+        <article class="stat-card accent-rose">
+          <div class="stat-label">Overdue</div>
+          <div class="stat-value" id="s-overdue">0</div>
+          <div class="stat-sub">follow-ups past due</div>
+        </article>
+        <article class="stat-card accent-teal">
+          <div class="stat-label">Win Rate</div>
+          <div class="stat-value" id="s-won-rate">0%</div>
+          <div class="stat-sub">closed won vs total leads</div>
+        </article>
+      </div>
+
+      <div class="content-grid">
+        <section class="panel panel-main">
+          <div class="panel-head">
+            <div>
+              <div class="section-title">New Lead</div>
+              <h2 class="panel-title">Capture the next opportunity</h2>
             </div>
-            <div class="toolbar-right" id="list-filters">
-                <select class="filter-select" id="flt-status" onchange="renderList()">
-                    <option value="All">All Statuses</option>
-                    <option value="New">New</option>
-                    <option value="Contacted">Contacted</option>
-                    <option value="Qualified">Qualified</option>
-                    <option value="Closed">Closed</option>
-                </select>
-                <select class="filter-select" id="flt-sort" onchange="renderList()">
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- LIST VIEW -->
-        <div id="list-view"></div>
-
-        <!-- KANBAN VIEW -->
-        <div id="kanban-view" class="hidden">
-            <div class="board">
-                <div class="k-col col-New" id="col-New"
-                     ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="onDrop(event,'New')">
-                    <div class="k-header">
-                        <div class="k-label"><span class="k-dot"></span> New</div>
-                        <span class="k-count" id="kc-New">0</span>
-                    </div>
-                    <div class="k-cards" id="kk-New"></div>
-                </div>
-                <div class="k-col col-Contacted" id="col-Contacted"
-                     ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="onDrop(event,'Contacted')">
-                    <div class="k-header">
-                        <div class="k-label"><span class="k-dot"></span> Contacted</div>
-                        <span class="k-count" id="kc-Contacted">0</span>
-                    </div>
-                    <div class="k-cards" id="kk-Contacted"></div>
-                </div>
-                <div class="k-col col-Qualified" id="col-Qualified"
-                     ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="onDrop(event,'Qualified')">
-                    <div class="k-header">
-                        <div class="k-label"><span class="k-dot"></span> Qualified</div>
-                        <span class="k-count" id="kc-Qualified">0</span>
-                    </div>
-                    <div class="k-cards" id="kk-Qualified"></div>
-                </div>
-                <div class="k-col col-Closed" id="col-Closed"
-                     ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="onDrop(event,'Closed')">
-                    <div class="k-header">
-                        <div class="k-label"><span class="k-dot"></span> Closed</div>
-                        <span class="k-count" id="kc-Closed">0</span>
-                    </div>
-                    <div class="k-cards" id="kk-Closed"></div>
-                </div>
-            </div>
-        </div>
-    </main>
-</div>
-
-<!-- EDIT MODAL -->
-<div class="modal-overlay hidden" id="edit-modal">
-    <div class="modal-card app-form">
-        <div class="modal-title">Edit Lead</div>
-        <input type="hidden" id="e-id">
-        <div class="modal-grid">
-            <input type="text"  id="e-name"    placeholder="Contact Name">
-            <input type="text"  id="e-source"  placeholder="Source">
-            <select id="e-status">
+          </div>
+          <form id="lead-form" class="lead-form" novalidate>
+            <div class="lead-grid">
+              <input class="input span-2" type="text" id="f-name" placeholder="Contact name *" maxlength="120">
+              <input class="input" type="text" id="f-company" placeholder="Company" maxlength="120">
+              <input class="input" type="email" id="f-email" placeholder="Email" maxlength="254">
+              <input class="input" type="text" id="f-phone" placeholder="Phone" maxlength="30">
+              <input class="input" type="text" id="f-source" placeholder="Source" maxlength="80">
+              <select class="select" id="f-status">
                 <option value="New">New</option>
                 <option value="Contacted">Contacted</option>
                 <option value="Qualified">Qualified</option>
-                <option value="Closed">Closed</option>
-            </select>
-            <div></div>
-            <textarea id="e-message" placeholder="Message / Inquiry" style="margin:0;"></textarea>
-            <textarea id="e-notes"   placeholder="Internal Notes"    style="margin:0;"></textarea>
+                <option value="Proposal">Proposal</option>
+                <option value="Closed-Won">Closed Won</option>
+                <option value="Closed-Lost">Closed Lost</option>
+              </select>
+              <select class="select" id="f-priority">
+                <option value="medium">Medium priority</option>
+                <option value="high">High priority</option>
+                <option value="low">Low priority</option>
+              </select>
+              <input class="input" type="number" id="f-value" placeholder="Deal value ($)" min="0" step="0.01">
+              <input class="input" type="date" id="f-followup">
+              <textarea class="textarea span-4" id="f-message" placeholder="Initial message or inquiry" maxlength="10000"></textarea>
+              <textarea class="textarea span-4" id="f-notes" placeholder="Internal notes" maxlength="5000"></textarea>
+            </div>
+            <div class="panel-actions">
+              <button class="btn btn-primary" type="submit">+ Add Lead</button>
+              <button class="btn btn-ghost" type="button" id="lead-reset">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <aside class="panel panel-side">
+          <div class="section-title">Follow-ups</div>
+          <h2 class="panel-title">Attention queue</h2>
+          <div id="reminder-strip" class="reminder-strip hidden">
+            <h3>Action needed</h3>
+            <ul id="reminder-items"></ul>
+          </div>
+          <div class="empty-state empty-tight" id="reminder-empty">
+            <span class="empty-icon">◎</span>
+            <p>No stale or overdue leads right now.</p>
+          </div>
+        </aside>
+      </div>
+
+      <section class="toolbar">
+        <div class="view-pills" role="tablist" aria-label="Lead views">
+          <button class="pill active" id="pill-list" type="button" data-view="list">List</button>
+          <button class="pill" id="pill-board" type="button" data-view="board">Board</button>
         </div>
-        <div class="modal-footer">
-            <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
-            <button class="btn btn-ghost"   onclick="closeModal()">Cancel</button>
+        <div class="toolbar-right">
+          <label class="visually-hidden" for="filter-status">Status filter</label>
+          <select class="filter-select" id="filter-status">
+            <option value="All">All statuses</option>
+            <option value="New">New</option>
+            <option value="Contacted">Contacted</option>
+            <option value="Qualified">Qualified</option>
+            <option value="Proposal">Proposal</option>
+            <option value="Closed-Won">Closed Won</option>
+            <option value="Closed-Lost">Closed Lost</option>
+          </select>
+          <label class="visually-hidden" for="filter-sort">Sort order</label>
+          <select class="filter-select" id="filter-sort">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="value">Highest value</option>
+          </select>
         </div>
+      </section>
+
+      <section id="list-view"></section>
+
+      <section id="board-view" class="board hidden" aria-label="Lead pipeline board">
+        <article class="board-col" data-status="New">
+          <header class="board-head"><span>New</span><span class="board-count" id="count-New">0</span></header>
+          <div class="board-cards" id="lane-New"></div>
+        </article>
+        <article class="board-col" data-status="Contacted">
+          <header class="board-head"><span>Contacted</span><span class="board-count" id="count-Contacted">0</span></header>
+          <div class="board-cards" id="lane-Contacted"></div>
+        </article>
+        <article class="board-col" data-status="Qualified">
+          <header class="board-head"><span>Qualified</span><span class="board-count" id="count-Qualified">0</span></header>
+          <div class="board-cards" id="lane-Qualified"></div>
+        </article>
+        <article class="board-col" data-status="Proposal">
+          <header class="board-head"><span>Proposal</span><span class="board-count" id="count-Proposal">0</span></header>
+          <div class="board-cards" id="lane-Proposal"></div>
+        </article>
+        <article class="board-col" data-status="Closed-Won">
+          <header class="board-head"><span>Closed Won</span><span class="board-count" id="count-Closed-Won">0</span></header>
+          <div class="board-cards" id="lane-Closed-Won"></div>
+        </article>
+        <article class="board-col" data-status="Closed-Lost">
+          <header class="board-head"><span>Closed Lost</span><span class="board-count" id="count-Closed-Lost">0</span></header>
+          <div class="board-cards" id="lane-Closed-Lost"></div>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal-overlay hidden" id="edit-modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <h2 class="modal-title" id="modal-title">Edit Lead</h2>
+        <button class="icon-button" type="button" id="modal-close" aria-label="Close">✕</button>
+      </div>
+      <form id="edit-form" novalidate>
+        <input type="hidden" id="e-id">
+        <div class="lead-grid">
+          <input class="input span-2" type="text" id="e-name" placeholder="Contact name *" maxlength="120">
+          <input class="input" type="text" id="e-company" placeholder="Company" maxlength="120">
+          <input class="input" type="email" id="e-email" placeholder="Email" maxlength="254">
+          <input class="input" type="text" id="e-phone" placeholder="Phone" maxlength="30">
+          <input class="input" type="text" id="e-source" placeholder="Source" maxlength="80">
+          <select class="select" id="e-status">
+            <option value="New">New</option>
+            <option value="Contacted">Contacted</option>
+            <option value="Qualified">Qualified</option>
+            <option value="Proposal">Proposal</option>
+            <option value="Closed-Won">Closed Won</option>
+            <option value="Closed-Lost">Closed Lost</option>
+          </select>
+          <select class="select" id="e-priority">
+            <option value="medium">Medium priority</option>
+            <option value="high">High priority</option>
+            <option value="low">Low priority</option>
+          </select>
+          <input class="input" type="number" id="e-value" placeholder="Deal value ($)" min="0" step="0.01">
+          <input class="input" type="date" id="e-followup">
+          <textarea class="textarea span-4" id="e-message" placeholder="Initial message or inquiry" maxlength="10000"></textarea>
+          <textarea class="textarea span-4" id="e-notes" placeholder="Internal notes" maxlength="5000"></textarea>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-primary" type="submit">Save changes</button>
+          <button class="btn btn-ghost" type="button" id="modal-cancel">Cancel</button>
+        </div>
+      </form>
     </div>
-</div>
+  </div>
 
-<!-- TOAST -->
-<div id="toast"></div>
-
-<script>
-let leads       = [];
-let view        = 'list';
-let dragId      = null;
-let currentUser = '';
-let nextTempId  = -1;
-
-function esc(t) {
-    if (!t) return '';
-    const d = document.createElement('div');
-    d.textContent = t;
-    return d.innerHTML;
-}
-function fmt(dateStr) {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-function fmtShort(dateStr) {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-let toastTimer = null;
-function toast(msg, type = 'ok') {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = `show t-${type}`;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.className = ''; }, 2800);
-}
-
-/* ── AUTH ── */
-async function doLogin() {
-    const u = document.getElementById('auth-user').value.trim();
-    const p = document.getElementById('auth-pass').value.trim();
-    if (!u || !p) return toast('Please enter your username and password.', 'err');
-
-    const btn = document.getElementById('btn-login');
-    btn.textContent = 'Signing in…';
-    btn.disabled = true;
-
-    try {
-        const res  = await fetch('/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ username: u, password: p })
-        });
-        const data = await res.json();
-        if (res.ok) { currentUser = u; enterApp(); }
-        else toast(data.error || 'Login failed.', 'err');
-    } catch {
-        toast('Could not reach server.', 'err');
-    } finally {
-        btn.textContent = 'Sign In →';
-        btn.disabled = false;
-    }
-}
-
-async function doSignup() {
-    const u = document.getElementById('auth-user').value.trim();
-    const p = document.getElementById('auth-pass').value.trim();
-    if (!u || !p) return toast('Please enter a username and password.', 'err');
-
-    const btn = document.getElementById('btn-signup');
-    btn.textContent = 'Creating…';
-    btn.disabled = true;
-
-    try {
-        const res  = await fetch('/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ username: u, password: p })
-        });
-        const data = await res.json();
-        if (res.ok) toast('Account created! You can now sign in.');
-        else toast(data.error || 'Signup failed.', 'err');
-    } catch {
-        toast('Could not reach server.', 'err');
-    } finally {
-        btn.textContent = 'Create Account';
-        btn.disabled = false;
-    }
-}
-
-function enterApp() {
-    document.getElementById('auth-wrap').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    document.getElementById('header-user').style.display = 'flex';
-    document.getElementById('username-display').textContent = currentUser;
-    loadLeads();
-}
-
-async function logout() {
-    try { await fetch('/logout', { method: 'POST', credentials: 'include' }); } catch {}
-    currentUser = '';
-    leads = [];
-    document.getElementById('auth-wrap').classList.remove('hidden');
-    document.getElementById('app').classList.add('hidden');
-    document.getElementById('header-user').style.display = 'none';
-    document.getElementById('auth-user').value = '';
-    document.getElementById('auth-pass').value = '';
-}
-
-/* ── SESSION CHECK ── */
-async function checkSession() {
-    try {
-        const res = await fetch('/me', { credentials: 'include' });
-        if (res.ok) {
-            const data = await res.json();
-            currentUser = data.username;
-            enterApp();
-        }
-    } catch {}
-}
-
-/* ── DATA ── */
-async function loadLeads() {
-    try {
-        const res  = await fetch('/leads', { credentials: 'include' });
-        const data = await res.json();
-        if (res.ok) {
-            leads = data.leads || [];
-            renderStats();
-            view === 'list' ? renderList() : renderKanban();
-            loadReminders();
-        } else {
-            toast(data.error || 'Failed to load leads.', 'err');
-        }
-    } catch (e) {
-        console.error('loadLeads error:', e);
-        toast('Could not reach server.', 'err');
-    }
-}
-
-async function addLead() {
-    const name    = document.getElementById('f-name').value.trim();
-    const source  = document.getElementById('f-source').value.trim();
-    const message = document.getElementById('f-message').value.trim();
-    const status  = document.getElementById('f-status').value;
-    const notes   = document.getElementById('f-notes').value.trim();
-    if (!name) return toast('Please enter a contact name.', 'err');
-    /* FIX: source is marked required on the backend; guard here too */
-    if (!source) return toast('Please enter a source (e.g. Referral, Website).', 'err');
-
-    const tempId   = nextTempId--;
-    const tempLead = { id: tempId, name, source, message, status, notes, created_at: new Date().toISOString() };
-    leads.unshift(tempLead);
-    renderStats(); renderList();
-    ['f-name','f-source','f-message','f-notes'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('f-status').value = 'New';
-    toast('Lead added ✓');
-
-    try {
-        const res = await fetch('/add-lead', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ name, source, message, status, notes })
-        });
-        if (res.ok) {
-            await loadLeads();
-        } else {
-            leads = leads.filter(l => l.id !== tempId);
-            renderStats(); renderList();
-            const d = await res.json();
-            toast(d.error || 'Failed to add lead.', 'err');
-        }
-    } catch {
-        leads = leads.filter(l => l.id !== tempId);
-        renderStats(); renderList();
-        toast('Could not reach server.', 'err');
-    }
-}
-
-async function deleteLead(id) {
-  if (!confirm('Remove this lead? This cannot be undone.')) return;
-
-  const card = document.getElementById(`card-${id}`);
-  if (card) {
-    card.classList.add('removing');
-    await new Promise(r => setTimeout(r, 180));
-  }
-
-  const backup = [...leads];
-  leads = leads.filter(l => String(l.id) !== String(id));
-  renderStats(); renderList();
-  toast('Lead removed.');
-
-  try {
-    const res = await fetch('/remove-lead', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ id })
-    });
-
-    if (res.ok) {
-      await loadLeads();
-      return;
-    }
-
-    const errData = await res.json().catch(() => ({}));
-    console.error('Delete failed — server said:', res.status, errData);
-    leads = backup; renderStats(); renderList();
-    toast(`Delete failed — ${errData.error || 'server error'} (${res.status})`, 'err');
-  } catch (e) {
-    console.error('Delete network error:', e);
-    leads = backup; renderStats(); renderList();
-    toast('Could not reach server.', 'err');
-  }
-}
-
-/* ── STATS ── */
-function renderStats() {
-    const total     = leads.length;
-    const newCount  = leads.filter(l => l.status === 'New').length;
-    const qualified = leads.filter(l => l.status === 'Qualified').length;
-    const closed    = leads.filter(l => l.status === 'Closed').length;
-    const rate      = total === 0 ? '0' : ((closed / total) * 100).toFixed(1);
-    const weekAgo   = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-    const weekly    = leads.filter(l => l.created_at && new Date(l.created_at) >= weekAgo).length;
-
-    document.getElementById('s-total').textContent      = total;
-    document.getElementById('s-week').textContent       = `+${weekly} this week`;
-    document.getElementById('s-new').textContent        = newCount;
-    document.getElementById('s-qualified').textContent  = qualified;
-    document.getElementById('s-conversion').textContent = rate + '%';
-}
-
-/* ── REMINDERS ── */
-async function loadReminders() {
-    try {
-        const res  = await fetch('/reminders', { credentials: 'include' });
-        const data = await res.json();
-        const strip = document.getElementById('reminder-strip');
-        const list  = document.getElementById('reminder-items');
-        if (res.ok && data.reminders?.length > 0) {
-            strip.classList.remove('hidden');
-            list.innerHTML = data.reminders.map(r =>
-                `<li>No contact yet with <strong>${esc(r.name)}</strong> — came in via <em>${esc(r.source || 'unknown')}</em> over 7 days ago.</li>`
-            ).join('');
-        } else {
-            strip.classList.add('hidden');
-        }
-    } catch (e) { console.error(e); }
-}
-
-/* ── VIEW TOGGLE ── */
-function switchView(v) {
-    view = v;
-    document.getElementById('pill-list').classList.toggle('active', v === 'list');
-    document.getElementById('pill-kanban').classList.toggle('active', v === 'kanban');
-    document.getElementById('list-filters').style.display = v === 'list' ? 'flex' : 'none';
-    document.getElementById('list-view').classList.toggle('hidden', v !== 'list');
-    document.getElementById('kanban-view').classList.toggle('hidden', v !== 'kanban');
-    v === 'kanban' ? renderKanban() : renderList();
-}
-
-/* ── LIST VIEW ── */
-function renderList() {
-    const statusFilter = document.getElementById('flt-status').value;
-    const sortDir      = document.getElementById('flt-sort').value;
-    const container    = document.getElementById('list-view');
-
-    let filtered = leads.filter(l => statusFilter === 'All' || l.status === statusFilter);
-    filtered.sort((a, b) => sortDir === 'newest'
-        ? new Date(b.created_at) - new Date(a.created_at)
-        : new Date(a.created_at) - new Date(b.created_at));
-
-    if (filtered.length === 0) {
-        container.innerHTML = `<p style="text-align:center;color:var(--text-muted);padding:60px 0;font-size:14px;">No leads found. Add your first lead above.</p>`;
-        return;
-    }
-
-    container.innerHTML = filtered.map(l => {
-        const snippet = l.message ? (l.message.length > 120 ? l.message.slice(0, 120) + '…' : l.message) : '';
-        return `
-        <div class="lead-card" id="card-${l.id}">
-            <div class="lead-main">
-                <div class="lead-name">${esc(l.name)}</div>
-                <div class="lead-source">${esc(l.source || 'Unknown source')}</div>
-                <div class="lead-meta">
-                    <span class="badge badge-${esc(l.status)}">${esc(l.status)}</span>
-                    <span class="source-tag">${esc(l.source || '?')}</span>
-                    <span class="lead-date">${fmt(l.created_at)}</span>
-                </div>
-                ${snippet ? `<div class="lead-message">${esc(snippet)}</div>` : ''}
-                ${l.notes ? `<div class="lead-notes">📝 ${esc(l.notes)}</div>` : ''}
-                <div id="fu-${l.id}" class="followup-box"></div>
-            </div>
-            <div class="card-actions">
-                <button class="btn btn-sm btn-info"   onclick="genFollowUp(${l.id})">✉ Follow-up</button>
-                <button class="btn btn-sm btn-edit"   onclick="openEdit(${l.id})">✎ Edit</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteLead(${l.id})">✕ Delete</button>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-/* ── KANBAN ── */
-function renderKanban() {
-    ['New','Contacted','Qualified','Closed'].forEach(status => {
-        const cards   = leads.filter(l => l.status === status);
-        const col     = document.getElementById(`kk-${status}`);
-        const counter = document.getElementById(`kc-${status}`);
-        counter.textContent = cards.length;
-        col.innerHTML = cards.length === 0
-            ? `<p class="k-empty">Drop leads here</p>`
-            : cards.map(l => {
-                const snippet = l.message ? (l.message.length > 60 ? l.message.slice(0,60)+'…' : l.message) : '';
-                return `
-                <div class="k-card" draggable="true"
-                     ondragstart="dragStart(event,${l.id})"
-                     ondragend="dragEnd(event)">
-                    <div class="k-card-name">${esc(l.name)}</div>
-                    <div class="k-card-source">${esc(l.source || '—')}</div>
-                    ${snippet ? `<div class="k-card-snippet">${esc(snippet)}</div>` : ''}
-                    <div class="k-card-date">${fmtShort(l.created_at)}</div>
-                </div>`;
-            }).join('');
-    });
-}
-
-/* ── DRAG & DROP ── */
-function dragStart(e, id) {
-    dragId = id;
-    e.target.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-}
-function dragEnd(e) {
-    e.target.classList.remove('dragging');
-    document.querySelectorAll('.k-col').forEach(c => c.classList.remove('over'));
-}
-function onOver(e)  { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.classList.add('over'); }
-function onLeave(e) { e.currentTarget.classList.remove('over'); }
-
-async function onDrop(e, newStatus) {
-    e.preventDefault();
-    e.currentTarget.classList.remove('over');
-    if (!dragId) return;
-    const lead = leads.find(l => String(l.id) === String(dragId));   /* FIX: coerce types */
-    if (!lead || lead.status === newStatus) return;
-
-    const oldStatus = lead.status;
-    lead.status = newStatus;
-    renderKanban(); renderStats();
-    toast(`Moved to ${newStatus}`);
-
-    try {
-        const res = await fetch('/update-lead', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-                id: lead.id, name: lead.name, source: lead.source || '',
-                message: lead.message || '', status: newStatus, notes: lead.notes || ''
-            })
-        });
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            console.error('Kanban update failed:', res.status, errData);
-            lead.status = oldStatus;
-            renderKanban(); renderStats();
-            toast('Update failed — reverted.', 'err');
-        }
-    } catch (e) {
-        console.error('Kanban drop network error:', e);
-        lead.status = oldStatus;
-        renderKanban(); renderStats();
-        toast('Could not reach server.', 'err');
-    }
-    dragId = null;
-}
-
-/* ── FOLLOW-UP GENERATOR ── */
-async function genFollowUp(id) {
-    const lead = leads.find(l => String(l.id) === String(id));
-    if (!lead) return;
-    const box = document.getElementById(`fu-${id}`);
-    if (!box) return;
-    box.textContent = 'Generating…';
-    box.classList.add('open', 'followup-typing');
-    try {
-        const res  = await fetch('/generate-followup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ name: lead.name, message: lead.message || '' })
-        });
-        const data = await res.json();
-        box.classList.remove('followup-typing');
-        box.textContent = data.followup_text || (data.error || 'Could not generate follow-up.');
-    } catch {
-        box.classList.remove('followup-typing');
-        box.textContent = 'Error: could not reach server.';
-    }
-}
-
-/* ── EDIT MODAL ── */
-function openEdit(id) {
-    const l = leads.find(l => String(l.id) === String(id));   /* FIX: coerce types */
-    if (!l) return;
-    document.getElementById('e-id').value      = l.id;
-    document.getElementById('e-name').value    = l.name    || '';
-    document.getElementById('e-source').value  = l.source  || '';
-    document.getElementById('e-message').value = l.message || '';
-    document.getElementById('e-status').value  = l.status  || 'New';
-    document.getElementById('e-notes').value   = l.notes   || '';
-    document.getElementById('edit-modal').classList.remove('hidden');
-}
-function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
-
-async function saveEdit() {
-    const payload = {
-        id:      document.getElementById('e-id').value,
-        name:    document.getElementById('e-name').value.trim(),
-        source:  document.getElementById('e-source').value.trim(),
-        message: document.getElementById('e-message').value.trim(),
-        status:  document.getElementById('e-status').value,
-        notes:   document.getElementById('e-notes').value.trim()
-    };
-    if (!payload.name) return toast('Name is required.', 'err');
-
-    const idx    = leads.findIndex(l => String(l.id) === String(payload.id));
-    const backup = idx >= 0 ? { ...leads[idx] } : null;
-    if (idx >= 0) Object.assign(leads[idx], payload);
-    closeModal();
-    renderStats(); renderList();
-    toast('Lead updated ✓');
-
-    try {
-        const res = await fetch('/update-lead', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-            if (backup && idx >= 0) Object.assign(leads[idx], backup);
-            renderStats(); renderList();
-            const d = await res.json();
-            toast(d.error || 'Update failed.', 'err');
-        }
-    } catch {
-        if (backup && idx >= 0) Object.assign(leads[idx], backup);
-        renderStats(); renderList();
-        toast('Could not reach server.', 'err');
-    }
-}
-
-document.getElementById('edit-modal').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeModal();
-});
-
-checkSession();
-</script>
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+  <script src="/static/js/app.js" defer></script>
 </body>
 </html>

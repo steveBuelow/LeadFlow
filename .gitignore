@@ -1,29 +1,28 @@
-# macOS junk
-._*
-.DS_Store
 
-# Python junk
+# Python / mac junk
 __pycache__/
 *.pyc
+.DS_Store
+._*
 
-# Database
+# Databases
 *.db
 *.sqlite3
 
-# Environments
-venv/
+# Enviroments
 .env
+.venv/
+venv/
 
-# JavaScript junk
+# JS junk / misc
+
 node_modules/
- package.json
+package-lock.json
+package.json
 
-# More junk
+.pytest_cache/
+instance/
+coverage.xml
+
 .agents/
 .claude/
-Screenshots/.env
-
-# React
-instance/
-.env.*
-*.psyc
