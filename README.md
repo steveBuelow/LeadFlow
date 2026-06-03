@@ -1,6 +1,6 @@
 # LeadFlow CRM
 
-## [Live Deployment Link (tryleadflow.io)](https://wwww.tryleadflow.io)
+## [Live Deployment Link (tryleadflow.io)](https://www.tryleadflow.io)
 
 LeadFlow is a secure Flask + PostgreSQL CRM dashboard built for a polished student-friendly demo today and a real production path later. It keeps the dark, premium dashboard feel of your ledger app while focusing on lead capture, pipeline visibility, reminders, and future AI workflow automation.
 
