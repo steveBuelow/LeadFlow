@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import secrets as _secrets
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
@@ -10,7 +12,7 @@ except ImportError:  # pragma: no cover - only used in limited envs
     bcrypt = None
     from werkzeug.security import check_password_hash, generate_password_hash
 
-from db import fetch_all, fetch_one, insert_returning_id, execute_write
+from db import fetch_all, fetch_one, get_db, insert_returning_id, is_sqlite_url, execute_write
 
 
 if bcrypt is not None:
@@ -108,7 +110,7 @@ def find_user_by_credentials(login: str, password: str) -> dict[str, Any] | None
 def find_user_by_id(user_id: int) -> dict[str, Any] | None:
     row = fetch_one(
         """
-        SELECT id, username, email, last_sign_in_at, created_at
+        SELECT id, username, email, last_login, created_at
         FROM users
         WHERE id = %s AND is_active = TRUE
         LIMIT 1
@@ -118,10 +120,10 @@ def find_user_by_id(user_id: int) -> dict[str, Any] | None:
     return _jsonify_row(row) if row else None
 
 
-def update_last_login(user_id: int):
+def update_last_login(user_id: int) -> None:
     execute_write(
-        "UPDATE users SET last_sign_in_at = %s WHERE id = %s",
-        (utc_now_iso(), user_id)
+        "UPDATE users SET last_login = %s WHERE id = %s",
+        (utc_now_iso(), user_id),
     )
 
 def username_exists(username: str) -> bool:
@@ -333,3 +335,81 @@ def update_ai_fields(
         (score, summary, category, utc_now_iso(), lead_id, user_id),
     )
     return updated > 0
+
+
+# ── Password Reset ─────────────────────────────────────────────────────────
+
+def _hash_token(token: str) -> str:
+    """SHA-256 hash of a raw token — safe to store in DB."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def find_user_by_email(email: str) -> dict[str, Any] | None:
+    row = fetch_one(
+        "SELECT id, username, email FROM users WHERE email = %s AND is_active = TRUE LIMIT 1",
+        (email,),
+    )
+    return dict(row) if row else None
+
+
+def create_reset_token(user_id: int) -> str:
+    """Generate a secure reset token, store its hash, and return the raw token."""
+    # Invalidate any previous unused tokens for this user first
+    execute_write(
+        "DELETE FROM password_resets WHERE user_id = %s AND used_at IS NULL",
+        (user_id,),
+    )
+    token = _secrets.token_urlsafe(32)
+    token_hash = _hash_token(token)
+    expires_at = (utc_now() + timedelta(hours=1)).isoformat().replace("+00:00", "Z")
+    insert_returning_id(
+        """
+        INSERT INTO password_resets (user_id, token_hash, expires_at, created_at)
+        VALUES (%s, %s, %s, %s)
+        """,
+        (user_id, token_hash, expires_at, utc_now_iso()),
+    )
+    return token
+
+
+def verify_reset_token(token: str) -> dict[str, Any] | None:
+    """Return the reset row if the token is valid, unexpired, and unused; else None."""
+    token_hash = _hash_token(token)
+    row = fetch_one(
+        "SELECT id, user_id, expires_at, used_at FROM password_resets WHERE token_hash = %s LIMIT 1",
+        (token_hash,),
+    )
+    if not row:
+        return None
+    if row.get("used_at"):
+        return None
+    expires_at = _parse_dt(row.get("expires_at"))
+    if not expires_at or utc_now() > expires_at:
+        return None
+    return _jsonify_row(row)
+
+
+def consume_reset_token(token_id: int, user_id: int, new_password: str) -> bool:
+    """Mark the token used and update the user password in a single transaction."""
+    new_hash = _hash_password(new_password)
+    now = utc_now_iso()
+    ph = "?" if is_sqlite_url() else "%s"
+
+    with get_db() as conn:
+        cur = conn.cursor()
+        try:
+            # Mark token used — if rowcount is 0, it was already consumed
+            cur.execute(
+                f"UPDATE password_resets SET used_at = {ph} WHERE id = {ph} AND used_at IS NULL",
+                (now, token_id),
+            )
+            if cur.rowcount == 0:
+                return False
+            # Update password
+            cur.execute(
+                f"UPDATE users SET password = {ph} WHERE id = {ph} AND is_active = TRUE",
+                (new_hash, user_id),
+            )
+            return cur.rowcount > 0
+        finally:
+            cur.close()

@@ -1,0 +1,94 @@
+{% extends "_layout.html" %}
+{% block title %}Privacy Policy — LeadFlow{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+  <div class="page-header">
+    <a href="/" class="page-back">&#8592; Back to app</a>
+    <div class="page-eyebrow">Legal</div>
+    <h1 class="page-title">Privacy Policy</h1>
+    <p class="page-meta">Effective June 2025 &mdash; Last updated June 2026</p>
+  </div>
+
+  <div class="legal-body">
+
+    <div class="legal-callout">
+      <p>LeadFlow is a private CRM tool. We collect only what is necessary to operate the service and do not sell or share your data with advertisers or third parties.</p>
+    </div>
+
+    <section class="legal-section">
+      <h2>1. Who we are</h2>
+      <p>LeadFlow is a SaaS CRM application for managing leads, follow-ups, and pipeline data. References to "we," "us," or "LeadFlow" mean the operators of this service.</p>
+      <p>For privacy questions, contact us at <a href="mailto:leadflow.app1@gmail.com">leadflow.app1@gmail.com</a>.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>2. Information we collect</h2>
+      <p><strong style="color:var(--text)">Account information:</strong> When you register, we store your username, email address, and a bcrypt hash of your password. Your plain-text password is never stored.</p>
+      <p><strong style="color:var(--text)">Lead data:</strong> Contact names, companies, emails, phone numbers, deal values, notes, and pipeline status that you enter into the CRM.</p>
+      <p><strong style="color:var(--text)">Usage data:</strong> Timestamps for account creation, last login, and lead activity. We do not run third-party analytics or ad tracking.</p>
+      <p><strong style="color:var(--text)">Session data:</strong> A secure, encrypted session cookie that identifies your logged-in session. See the Cookies section below.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>3. How we use your information</h2>
+      <ul>
+        <li>To authenticate you and keep your session secure</li>
+        <li>To store and display your CRM data</li>
+        <li>To send password reset emails when you request them</li>
+        <li>To enforce rate limits and prevent abuse</li>
+      </ul>
+      <p>We do not use your data for advertising, profiling, or sale to third parties.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>4. Cookies</h2>
+      <p><strong style="color:var(--text)">Session cookie</strong> (<code>leadflow-sid</code> / <code>__Host-leadflow-sid</code>): Required to keep you signed in. HttpOnly (not readable by JavaScript), Secure in production, SameSite=Strict. Expires after 7 days of inactivity.</p>
+      <p><strong style="color:var(--text)">CSRF cookie</strong> (<code>csrf_token</code>): A short-lived anti-forgery token tied to your session. Expires after 1 hour and is refreshed on each request.</p>
+      <p>We do not use tracking, advertising, or analytics cookies.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>5. Password reset</h2>
+      <p>If you request a password reset, we generate a cryptographically random token, store a SHA-256 hash of it (never the raw token), and email you a link containing the raw token. The link expires in 1 hour and can only be used once. Requesting a reset does not reveal whether your email address is registered.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>6. Security</h2>
+      <p>Passwords are hashed with bcrypt (cost factor 13). The application enforces HTTPS in production, sets strict security headers (Content-Security-Policy, X-Frame-Options, Referrer-Policy), applies CSRF protection on all state-changing requests, and rate-limits authentication endpoints.</p>
+      <p>No security measure is perfect. In the event of a data breach affecting your account, we will notify you promptly.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>7. Data storage and hosting</h2>
+      <p>Data is stored in a PostgreSQL database hosted on Render.com (or a compatible cloud provider). Connections use TLS. If AI features are enabled, lead content may be sent to a third-party AI provider (such as Anthropic or OpenAI) for processing. No data is stored by the AI provider beyond the duration of the request.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>8. Data retention</h2>
+      <p>Your account and lead data are retained for as long as your account is active. Password reset tokens expire after 1 hour and are deleted when used. If you wish to delete your account or export your data, contact us at <a href="mailto:leadflow.app1@gmail.com">leadflow.app1@gmail.com</a>.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>9. Your rights</h2>
+      <p>You may request access to, correction of, or deletion of your personal data at any time by emailing <a href="mailto:leadflow.app1@gmail.com">leadflow.app1@gmail.com</a>. We will respond within a reasonable time.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>10. Children</h2>
+      <p>LeadFlow is not directed at anyone under 16 years of age. We do not knowingly collect personal data from children.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>11. Changes to this policy</h2>
+      <p>We may update this policy periodically. Continued use of the service after changes constitutes acceptance. The effective date at the top of this page will reflect the most recent revision.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>12. Contact</h2>
+      <p>Privacy questions: <a href="mailto:leadflow.app1@gmail.com">leadflow.app1@gmail.com</a></p>
+    </section>
+
+  </div>
+</div>
+{% endblock %}

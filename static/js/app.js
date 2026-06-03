@@ -97,11 +97,29 @@ function markInvalid(field, message) {
   showToast(message, "warn");
 }
 
+function validatePasswordStrength(value) {
+  if (value.length < 10) return "Password must be at least 10 characters.";
+  if (value.length > 72) return "Password must not exceed 72 characters.";
+  if (!/[A-Z]/.test(value)) return "Password must contain at least one uppercase letter.";
+  if (!/[a-z]/.test(value)) return "Password must contain at least one lowercase letter.";
+  if (!/\d/.test(value)) return "Password must contain at least one digit.";
+  if (!/[^A-Za-z0-9]/.test(value)) return "Password must contain at least one special character.";
+  return null;
+}
+
 function validateAuthForm() {
   const username = $("#auth-username");
   const email = $("#auth-email");
   const password = $("#auth-password");
   clearInvalid([username, email, password]);
+
+  if (state.authMode === "forgot") {
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value.trim())) {
+      markInvalid(email, "A valid email address is required.");
+      return false;
+    }
+    return true;
+  }
 
   if (!username.value.trim()) {
     markInvalid(username, "Username or email is required.");
@@ -116,10 +134,16 @@ function validateAuthForm() {
       markInvalid(email, "A valid email address is required.");
       return false;
     }
-  }
-  if (password.value.length < 10) {
-    markInvalid(password, "Password must be at least 10 characters.");
-    return false;
+    const pwError = validatePasswordStrength(password.value);
+    if (pwError) {
+      markInvalid(password, pwError);
+      return false;
+    }
+  } else {
+    if (password.value.length < 10) {
+      markInvalid(password, "Password must be at least 10 characters.");
+      return false;
+    }
   }
   return true;
 }
@@ -166,14 +190,33 @@ function validateLeadPayload(payload, prefix) {
 
 function setAuthMode(mode) {
   state.authMode = mode;
-  $("#register-email-group").classList.toggle("hidden", mode !== "register");
-  $("#auth-title").textContent = mode === "register" ? "Create your workspace" : "Welcome back";
-  $("#auth-copy").textContent = mode === "register"
-    ? "Start with a secure CRM foundation built for outreach, partnerships, and inbound leads."
-    : "Sign in to manage leads, reminders, and future AI workflows.";
-  $("#auth-submit").textContent = mode === "register" ? "Create account" : "Sign in";
-  $("#auth-toggle-text").textContent = mode === "register" ? "Already have an account?" : "Need an account?";
-  $("#auth-toggle-btn").textContent = mode === "register" ? "Sign in" : "Create one";
+  const isForgot   = mode === "forgot";
+  const isRegister = mode === "register";
+
+  // Show/hide form fields
+  $("#auth-username-group").classList.toggle("hidden", isForgot);
+  $("#register-email-group").classList.toggle("hidden", !isRegister && !isForgot);
+  $("#auth-password-group").classList.toggle("hidden", isForgot);
+  // "Forgot password?" link only in login mode
+  $("#forgot-pw-row").classList.toggle("hidden", mode !== "login");
+
+  if (isForgot) {
+    $("#auth-email-label").textContent = "Email address";
+    $("#auth-title").textContent = "Reset password";
+    $("#auth-copy").textContent = "Enter your email and we'll send reset instructions.";
+    $("#auth-submit").textContent = "Send reset link";
+    $("#auth-toggle-text").textContent = "Remember your password?";
+    $("#auth-toggle-btn").textContent = "Sign in";
+  } else {
+    $("#auth-email-label").textContent = "Email";
+    $("#auth-title").textContent = isRegister ? "Create your workspace" : "Welcome back";
+    $("#auth-copy").textContent = isRegister
+      ? "Start with a secure CRM foundation built for outreach, partnerships, and inbound leads."
+      : "Sign in to manage leads, reminders, and future AI workflows.";
+    $("#auth-submit").textContent = isRegister ? "Create account" : "Sign in";
+    $("#auth-toggle-text").textContent = isRegister ? "Already have an account?" : "Need an account?";
+    $("#auth-toggle-btn").textContent = isRegister ? "Sign in" : "Create one";
+  }
   $("#auth-email").value = "";
 }
 
@@ -420,6 +463,17 @@ async function refreshSession() {
   await loadDashboard();
 }
 
+async function submitForgotPassword() {
+  if (!validateAuthForm()) return;
+  // Always show the same message regardless of result — prevent email enumeration
+  await apiFetch("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email: $("#auth-email").value.trim() }),
+  });
+  showToast("If that email is registered, you'll receive reset instructions shortly.", "info");
+  setAuthMode("login");
+}
+
 async function submitAuth() {
   if (!validateAuthForm()) return;
   const endpoint = state.authMode === "register" ? "/auth/register" : "/auth/login";
@@ -571,10 +625,21 @@ function attachBoardDnD() {
 }
 
 function attachEvents() {
-  $("#auth-toggle-btn").addEventListener("click", () => setAuthMode(state.authMode === "login" ? "register" : "login"));
+  $("#auth-toggle-btn").addEventListener("click", () => {
+    if (state.authMode === "forgot") {
+      setAuthMode("login");
+    } else {
+      setAuthMode(state.authMode === "login" ? "register" : "login");
+    }
+  });
+  $("#forgot-pw-btn").addEventListener("click", () => setAuthMode("forgot"));
   $("#auth-form").addEventListener("submit", async (event) => {
     event.preventDefault();
-    await submitAuth();
+    if (state.authMode === "forgot") {
+      await submitForgotPassword();
+    } else {
+      await submitAuth();
+    }
   });
   $("#lead-form").addEventListener("submit", async (event) => {
     event.preventDefault();

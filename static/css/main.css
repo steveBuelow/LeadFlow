@@ -783,6 +783,144 @@ input, select, textarea { font: inherit; }
   to   { opacity: 1; transform: translateX(0); }
 }
 
+/* ══════════════ FOOTER ══════════════ */
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: rgba(8,9,15,0.90);
+  backdrop-filter: blur(18px);
+  padding: 20px 28px;
+  margin-top: 48px;
+}
+.footer-inner {
+  width: min(1380px, calc(100vw - 40px));
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.footer-copy {
+  color: var(--text-3);
+  font-size: 13px;
+}
+.footer-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.footer-links a {
+  color: var(--text-3);
+  font-size: 13px;
+  transition: color var(--transition);
+}
+.footer-links a:hover { color: var(--primary); }
+
+/* ══════════════ LEGAL / STATIC PAGES ══════════════ */
+.page-shell {
+  width: min(820px, calc(100vw - 40px));
+  margin: 0 auto;
+  padding: 48px 0 80px;
+}
+.page-header { margin-bottom: 48px; }
+.page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-3);
+  font-size: 13px;
+  margin-bottom: 28px;
+  transition: color var(--transition);
+}
+.page-back:hover { color: var(--primary); }
+.page-eyebrow {
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.page-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.page-meta {
+  color: var(--text-3);
+  font-size: 13px;
+}
+.legal-body { display: grid; gap: 36px; }
+.legal-section h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.legal-section p {
+  color: var(--text-2);
+  line-height: 1.75;
+  margin-bottom: 10px;
+}
+.legal-section p:last-child { margin-bottom: 0; }
+.legal-section ul {
+  color: var(--text-2);
+  padding-left: 22px;
+  line-height: 1.75;
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.legal-section a { color: var(--primary); }
+.legal-section a:hover { color: var(--primary-hover); }
+.legal-callout {
+  background: var(--primary-dim);
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.legal-callout p {
+  color: var(--text) !important;
+  font-size: 14px;
+  margin: 0 !important;
+}
+
+/* ══════════════ CONTACT PAGE ══════════════ */
+.contact-grid { display: grid; gap: 16px; }
+.contact-card {
+  background: rgba(15,16,24,0.93);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+}
+.contact-card h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.contact-card p { color: var(--text-2); line-height: 1.7; }
+.contact-email-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 15px;
+  margin-top: 14px;
+  transition: color var(--transition);
+}
+.contact-email-link:hover { color: var(--primary-hover); }
+
+/* ══════════════ AUTH FOOTER SECONDARY ══════════════ */
+.auth-footer-secondary {
+  margin-top: 10px;
+  text-align: center;
+}
+
 /* ══════════════ RESPONSIVE ══════════════ */
 @media (max-width: 1280px) {
   .stats-grid { grid-template-columns: repeat(4, minmax(0,1fr)); }

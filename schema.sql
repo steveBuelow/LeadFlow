@@ -51,3 +51,16 @@ DROP TRIGGER IF EXISTS trg_leads_updated_at ON leads;
 CREATE TRIGGER trg_leads_updated_at
     BEFORE UPDATE ON leads
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ── Password Reset Tokens ──────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS password_resets (
+    id         SERIAL PRIMARY KEY,
+    user_id    INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(64)  NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ  NOT NULL,
+    used_at    TIMESTAMPTZ,
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pw_resets_token ON password_resets(token_hash);
+CREATE INDEX IF NOT EXISTS idx_pw_resets_user  ON password_resets(user_id);
