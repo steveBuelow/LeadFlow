@@ -72,10 +72,10 @@ def _verify_password(password: str, password_hash: str) -> bool:
 def create_user(username: str, email: str, password: str) -> int:
     return insert_returning_id(
         """
-        INSERT INTO users (username, email, password, created_at)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO users (username, email, password, created_at, is_active)
+        VALUES (%s, %s, %s, %s, %s)
         """,
-        (username, email, _hash_password(password), utc_now_iso()),
+        (username, email, _hash_password(password), utc_now_iso(), 1),
     )
 
 
@@ -84,7 +84,7 @@ def find_user_by_credentials(login: str, password: str) -> dict[str, Any] | None
         """
         SELECT id, username, email, password
         FROM users
-        WHERE (username = %s OR email = %s) AND is_active = %s
+        WHERE (username = %s OR email = %s) AND is_active = TRUE
         LIMIT 1
         """,
         (login, login, 1),
@@ -110,10 +110,10 @@ def find_user_by_id(user_id: int) -> dict[str, Any] | None:
         """
         SELECT id, username, email, last_login, created_at
         FROM users
-        WHERE id = %s AND is_active = %s
+        WHERE id = %s AND is_active = TRUE
         LIMIT 1
         """,
-        (user_id, 1),
+        (user_id,),
     )
     return _jsonify_row(row) if row else None
 
