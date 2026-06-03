@@ -78,7 +78,7 @@ def login():
     session["user_id"] = user["id"]
     session["username"] = user["username"]
     session.permanent = True
-    update_last_login(int(user["id"]))
+    update_last_login(user["id"])
     return ok({"username": user["username"], "email": user["email"]})
 
 
@@ -94,7 +94,7 @@ def me():
     user_id = session.get("user_id")
     if not user_id:
         return err("Not authenticated.", 401)
-    user = find_user_by_id(int(user_id))
+    user = find_user_by_id(user_id)
     if not user:
         session.clear()
         return err("User not found.", 401)
