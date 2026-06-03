@@ -75,7 +75,7 @@ def create_user(username: str, email: str, password: str) -> int:
         INSERT INTO users (username, email, password, created_at, is_active)
         VALUES (%s, %s, %s, %s, %s)
         """,
-        (username, email, _hash_password(password), utc_now_iso(), 1),
+        (username, email, _hash_password(password), utc_now_iso(), True),
     )
 
 
