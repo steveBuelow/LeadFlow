@@ -72,7 +72,7 @@ def _verify_password(password: str, password_hash: str) -> bool:
 def create_user(username: str, email: str, password: str) -> int:
     return insert_returning_id(
         """
-        INSERT INTO users (username, email, password, created_at, is_active)
+        INSERT INTO users (username, email, password, created_at)
         VALUES (%s, %s, %s, %s, %s)
         """,
         (username, email, _hash_password(password), utc_now_iso(), 1),
