@@ -87,7 +87,7 @@ def find_user_by_credentials(login: str, password: str) -> dict[str, Any] | None
         WHERE (username = %s OR email = %s) AND is_active = TRUE
         LIMIT 1
         """,
-        (login, login, 1),
+        (login, login, True),
     )
 
     if bcrypt is not None:
