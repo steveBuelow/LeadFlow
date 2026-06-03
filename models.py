@@ -108,7 +108,7 @@ def find_user_by_credentials(login: str, password: str) -> dict[str, Any] | None
 def find_user_by_id(user_id: int) -> dict[str, Any] | None:
     row = fetch_one(
         """
-        SELECT id, username, email, last_login, created_at
+        SELECT id, username, email, last_sign_in_at, created_at
         FROM users
         WHERE id = %s AND is_active = TRUE
         LIMIT 1
@@ -118,9 +118,11 @@ def find_user_by_id(user_id: int) -> dict[str, Any] | None:
     return _jsonify_row(row) if row else None
 
 
-def update_last_login(user_id: int) -> None:
-    execute_write("UPDATE users SET last_login = %s WHERE id = %s", (utc_now_iso(), user_id))
-
+def update_last_login(user_id: int):
+    execute_write(
+        "UPDATE users SET last_sign_in_at = %s WHERE id = %s",
+        (utc_now_iso(), user_id)
+    )
 
 def username_exists(username: str) -> bool:
     return fetch_one("SELECT 1 AS found FROM users WHERE username = %s LIMIT 1", (username,)) is not None
