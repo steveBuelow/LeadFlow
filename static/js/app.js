@@ -8,6 +8,9 @@ const state = {
   stats: null,
   reminders: { stale: [], overdue: [] },
   draggedLeadId: null,
+  // AI follow-up tracking — persists across list re-renders, cleared on full reload
+  aiLoadingSet:   new Set(),   // Set<leadId> — buttons show spinner while loading
+  followupDrafts: {},          // { [leadId]: string } — editable draft per lead
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -240,6 +243,151 @@ function resetLeadForm() {
   $("#lead-form").reset();
 }
 
+// ── Onboarding checklist ────────────────────────────────────────────────────
+const OB_KEY      = "leadflow_onboarding_tasks";
+const OB_HIDE_KEY = "leadflow_onboarding_dismissed";
+
+const OB_TASKS = [
+  { id: "add_lead",     label: "Add your first lead" },
+  { id: "set_followup", label: "Set a follow-up date" },
+  { id: "move_stage",   label: "Move a lead to a new stage" },
+  { id: "close_lead",   label: "Close or complete a lead" },
+];
+
+function _obLoad() {
+  try { return JSON.parse(localStorage.getItem(OB_KEY) || "{}"); } catch { return {}; }
+}
+function _obSave(data) {
+  try { localStorage.setItem(OB_KEY, JSON.stringify(data)); } catch { /* private browsing */ }
+}
+
+function renderOnboarding() {
+  const container = document.getElementById("onboarding-section");
+  if (!container) return;
+
+  // Permanently dismissed — clear and bail
+  if (localStorage.getItem(OB_HIDE_KEY) === "true") {
+    container.replaceChildren();
+    return;
+  }
+
+  // Auto-detect completion from live lead data
+  const completed = _obLoad();
+  if (state.leads.length > 0)                                                   completed.add_lead     = true;
+  if (state.leads.some((l) => l.next_followup))                                 completed.set_followup = true;
+  if (state.leads.some((l) => l.status !== "New"))                              completed.move_stage   = true;
+  if (state.leads.some((l) => l.status === "Closed-Won" || l.status === "Closed-Lost")) completed.close_lead = true;
+  _obSave(completed);
+
+  const doneCount = OB_TASKS.filter((t) => completed[t.id]).length;
+
+  // Auto-hide once everything is done
+  if (doneCount === OB_TASKS.length) {
+    container.replaceChildren();
+    return;
+  }
+
+  container.replaceChildren(); // clear previous render
+
+  const card = createNode("div", "onboarding-card");
+
+  // Header
+  const hdr  = createNode("div", "onboarding-header");
+  const hdrL = createNode("div");
+  hdrL.appendChild(createNode("div", "onboarding-title", "🚀 Getting started with LeadFlow"));
+  hdrL.appendChild(createNode("div", "onboarding-subtitle", `${doneCount} of ${OB_TASKS.length} completed`));
+  const dismissBtn = createNode("button", "onboarding-dismiss", "✕");
+  dismissBtn.type = "button";
+  dismissBtn.setAttribute("aria-label", "Dismiss checklist");
+  dismissBtn.addEventListener("click", () => {
+    try { localStorage.setItem(OB_HIDE_KEY, "true"); } catch { /* private browsing */ }
+    container.replaceChildren();
+  });
+  hdr.append(hdrL, dismissBtn);
+  card.appendChild(hdr);
+
+  // Checklist items
+  const list = createNode("div", "onboarding-items");
+  OB_TASKS.forEach((task) => {
+    const isDone = Boolean(completed[task.id]);
+    const item   = createNode("div", `onboarding-item${isDone ? " done" : ""}`);
+    const check  = createNode("span", "onboarding-check", isDone ? "✓" : "");
+    check.setAttribute("aria-hidden", "true");
+    item.append(check, createNode("span", "onboarding-label", task.label));
+    list.appendChild(item);
+  });
+  card.appendChild(list);
+
+  // Progress bar
+  const prog = createNode("div", "onboarding-progress");
+  const bar  = createNode("div", "onboarding-progress-bar");
+  bar.style.width = `${(doneCount / OB_TASKS.length) * 100}%`;
+  prog.appendChild(bar);
+  card.appendChild(prog);
+
+  container.appendChild(card);
+}
+
+// ── Today's Follow-Ups panel ────────────────────────────────────────────────
+function renderTodayFollowups() {
+  const container = document.getElementById("today-followups");
+  if (!container) return;
+
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD local
+  // Use local date to match the YYYY-MM-DD dates stored by the date input
+  const localToday = (() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  })();
+
+  const todayLeads = state.leads.filter(
+    (l) => l.next_followup === localToday &&
+           l.status !== "Closed-Won" &&
+           l.status !== "Closed-Lost"
+  );
+
+  container.replaceChildren();
+
+  if (!todayLeads.length) {
+    const empty = createNode("div", "today-all-clear");
+    empty.innerHTML = "<strong>🎉</strong>You're all caught up for today!<br>No pending follow-ups.";
+    container.appendChild(empty);
+    return;
+  }
+
+  todayLeads.forEach((lead) => {
+    const item = createNode("div", "today-lead-item");
+    const info = createNode("div", "today-lead-info");
+    info.appendChild(createNode("div", "today-lead-name", lead.name));
+    const meta = [lead.company, lead.status.replace("-", " "), lead.value ? currency(lead.value) : null]
+      .filter(Boolean).join(" · ");
+    info.appendChild(createNode("div", "today-lead-meta", meta));
+
+    const isLoading = state.aiLoadingSet.has(lead.id);
+    const draftBtn  = createNode("button", "btn btn-ai btn-sm", "");
+    draftBtn.type = "button";
+    draftBtn.title = "Draft AI follow-up message";
+    if (isLoading) {
+      draftBtn.disabled = true;
+      draftBtn.appendChild(createNode("span", "ai-spinner"));
+    } else if (state.followupDrafts[lead.id]) {
+      draftBtn.textContent = "✓ Drafted";
+    } else {
+      draftBtn.textContent = "✨ Draft";
+    }
+    draftBtn.addEventListener("click", async () => {
+      if (state.view !== "list") switchView("list");
+      await runAiAction("followup", lead.id);
+    });
+
+    item.append(info, draftBtn);
+    container.appendChild(item);
+  });
+}
+
 function renderHero() {
   const hours = new Date().getHours();
   const greeting = hours < 12 ? "Good morning" : hours < 18 ? "Good afternoon" : "Good evening";
@@ -377,10 +525,55 @@ function renderList() {
     actions.appendChild(leadActionButton("Edit", "btn-ghost", "edit", lead.id));
     actions.appendChild(leadActionButton("Delete", "btn-danger", "delete", lead.id));
     actions.appendChild(leadActionButton("Score", "btn-ai", "score", lead.id));
-    actions.appendChild(leadActionButton("Follow-up", "btn-ai", "followup", lead.id));
+
+    // ✨ Draft Follow-Up button with per-lead loading/done state
+    const isAiLoading = state.aiLoadingSet.has(lead.id);
+    const hasDraft    = Boolean(state.followupDrafts[lead.id]);
+    const followupBtn = createNode("button", "btn btn-ai btn-sm", "");
+    followupBtn.type = "button";
+    followupBtn.dataset.action  = "followup";
+    followupBtn.dataset.leadId  = String(lead.id);
+    if (isAiLoading) {
+      followupBtn.disabled = true;
+      followupBtn.setAttribute("aria-busy", "true");
+      followupBtn.appendChild(createNode("span", "ai-spinner"));
+    } else {
+      followupBtn.textContent = hasDraft ? "✨ Re-draft" : "✨ Draft Follow-Up";
+    }
+    actions.appendChild(followupBtn);
+
     actions.appendChild(leadActionButton("Summarize", "btn-ai", "summarize", lead.id));
 
     card.append(main, actions);
+
+    // AI draft textarea — shown when a draft exists for this lead
+    if (state.followupDrafts[lead.id]) {
+      const draftWrap  = createNode("div", "ai-draft-wrap");
+      const draftLabel = createNode("div", "ai-draft-label", "✨ AI Follow-Up Draft — edit before sending");
+      const textarea   = document.createElement("textarea");
+      textarea.className = "textarea";
+      textarea.value     = state.followupDrafts[lead.id];
+      textarea.rows      = 5;
+      textarea.setAttribute("aria-label", "AI-generated follow-up draft");
+      // Persist edits back to state without triggering a re-render
+      textarea.addEventListener("input", (e) => {
+        state.followupDrafts[lead.id] = e.target.value;
+      });
+
+      const draftActions = createNode("div", "ai-draft-actions");
+      const clearBtn = createNode("button", "btn btn-ghost btn-sm", "Clear draft");
+      clearBtn.type = "button";
+      clearBtn.addEventListener("click", () => {
+        delete state.followupDrafts[lead.id];
+        renderList();
+        renderTodayFollowups();
+      });
+      draftActions.appendChild(clearBtn);
+
+      draftWrap.append(draftLabel, textarea, draftActions);
+      card.appendChild(draftWrap);
+    }
+
     container.appendChild(card);
   });
 }
@@ -429,7 +622,9 @@ function renderEverything() {
   renderHero();
   renderUser();
   renderStats();
-  renderReminders();
+  renderReminders();       // keeps state.reminders DOM nodes fresh (off-screen)
+  renderOnboarding();      // auto-detects task completion from state.leads
+  renderTodayFollowups();  // filters state.leads for today's date
   renderList();
   renderBoard();
 }
@@ -565,13 +760,38 @@ async function deleteLead(leadId) {
 }
 
 async function runAiAction(action, leadId) {
+  // ── Follow-up: per-lead loading state, draft stored in memory ─────────
+  if (action === "followup") {
+    state.aiLoadingSet.add(leadId);
+    renderList();
+    renderTodayFollowups(); // update the today panel's button state too
+
+    const response = await apiFetch(`/ai/leads/${leadId}/${action}`, { method: "POST" });
+    state.aiLoadingSet.delete(leadId);
+
+    if (!response.success) {
+      showToast(response.error || "AI action failed.", "error");
+      renderList();
+      renderTodayFollowups();
+      return;
+    }
+
+    if (response.followup_text) {
+      state.followupDrafts[leadId] = response.followup_text;
+      showToast("Follow-up draft ready — edit and copy below.", "success");
+    }
+    renderList();
+    renderTodayFollowups();
+    return;
+  }
+
+  // ── All other AI actions: reload dashboard after completion ────────────
   const response = await apiFetch(`/ai/leads/${leadId}/${action}`, { method: "POST" });
   if (!response.success) {
     showToast(response.error || "AI action failed.", "error");
     return;
   }
-  if (response.followup_text) showToast("Follow-up draft generated.", "success");
-  else if (response.summary) showToast("Summary generated.", "success");
+  if (response.summary)              showToast("Summary generated.", "success");
   else if (response.score !== undefined) showToast("Lead scored.", "success");
   else showToast(response.message || "AI action complete.", "info");
   await loadDashboard();
@@ -662,7 +882,7 @@ function attachEvents() {
 
   $("#list-view").addEventListener("click", async (event) => {
     const button = event.target.closest("[data-action]");
-    if (!button) return;
+    if (!button || button.disabled) return;  // ignore disabled (e.g. AI loading)
     const leadId = Number(button.dataset.leadId);
     const action = button.dataset.action;
     const lead = state.leads.find((item) => item.id === leadId);
@@ -682,9 +902,56 @@ function attachEvents() {
   attachBoardDnD();
 }
 
+// ── Accordion / collapsible panels ─────────────────────────────────────────
+// Completely isolated: touches only its own DOM nodes and localStorage keys.
+// Does not affect Kanban, form state, drag-and-drop, or any API calls.
+function initAccordions() {
+  const PANELS = [
+    {
+      toggleId:   "toggle-new-lead",
+      bodyId:     "new-lead-body",
+      storageKey: "lf_panel_new_lead",
+      defaultOpen: true,
+    },
+    {
+      toggleId:   "toggle-followups",
+      bodyId:     "followups-body",
+      storageKey: "lf_panel_followups",
+      defaultOpen: true,
+    },
+  ];
+
+  PANELS.forEach(({ toggleId, bodyId, storageKey, defaultOpen }) => {
+    const btn  = document.getElementById(toggleId);
+    const body = document.getElementById(bodyId);
+    if (!btn || !body) return; // silently skip if elements not in DOM
+
+    // Read persisted preference; fall back to defaultOpen
+    const stored = localStorage.getItem(storageKey);
+    let isOpen = stored !== null ? stored === "true" : defaultOpen;
+
+    function applyState() {
+      body.classList.toggle("hidden", !isOpen);
+      btn.setAttribute("aria-expanded", String(isOpen));
+      btn.title = isOpen ? "Collapse section" : "Expand section";
+    }
+
+    applyState(); // set initial visual state immediately
+
+    btn.addEventListener("click", () => {
+      isOpen = !isOpen;
+      try { localStorage.setItem(storageKey, String(isOpen)); } catch (_) { /* private browsing */ }
+      applyState();
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   attachEvents();
   setAuthMode("login");
   switchView("list");
+  initAccordions();   // panels snap to saved state before auth check
+  // Note: renderOnboarding() + renderTodayFollowups() are called inside
+  // renderEverything() after data loads — no pre-render needed here.
   await refreshSession();
 });

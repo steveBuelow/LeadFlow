@@ -915,6 +915,178 @@ input, select, textarea { font: inherit; }
 }
 .contact-email-link:hover { color: var(--primary-hover); }
 
+/* ══════════════ ONBOARDING CHECKLIST ══════════════ */
+.onboarding-card {
+  background: rgba(15,16,24,0.93);
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-lg);
+  padding: 18px 22px 16px;
+  margin-bottom: 22px;
+  position: relative;
+}
+.onboarding-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.onboarding-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.onboarding-subtitle {
+  color: var(--text-3);
+  font-size: 11px;
+  margin-top: 2px;
+}
+.onboarding-dismiss {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 14px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.onboarding-dismiss:hover { color: var(--text-2); background: var(--surface-3); }
+.onboarding-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.onboarding-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.onboarding-item.done { color: var(--text-3); }
+.onboarding-item.done .onboarding-label { text-decoration: line-through; }
+.onboarding-check {
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: var(--success);
+  transition: background var(--transition), border-color var(--transition);
+}
+.onboarding-item.done .onboarding-check {
+  background: var(--success-dim);
+  border-color: var(--success-border);
+}
+.onboarding-progress { height: 3px; background: var(--surface-3); border-radius: 999px; overflow: hidden; }
+.onboarding-progress-bar {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* ══════════════ TODAY'S FOLLOW-UPS PANEL ══════════════ */
+.today-lead-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.today-lead-item:last-child { border-bottom: none; }
+.today-lead-info { flex: 1; min-width: 0; }
+.today-lead-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.today-lead-meta { color: var(--text-3); font-size: 11px; margin-top: 2px; }
+.today-all-clear {
+  text-align: center;
+  padding: 32px 12px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.today-all-clear strong { display: block; font-size: 22px; margin-bottom: 6px; }
+
+/* ══════════════ AI DRAFT TEXTAREA ══════════════ */
+.ai-draft-wrap {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--accent-dim);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+}
+.ai-draft-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.ai-draft-wrap .textarea {
+  background: var(--surface-3);
+  border-color: var(--accent-border);
+  font-size: 13px;
+  min-height: 96px;
+  margin-bottom: 8px;
+}
+.ai-draft-wrap .textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.ai-draft-actions { display: flex; gap: 8px; }
+
+/* ══════════════ AI SPINNER ══════════════ */
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
+}
+.ai-spinner {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: ai-spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+/* ══════════════ ACCORDION ══════════════ */
+.accordion-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  padding: 6px;
+  border-radius: 8px;
+  transition: color var(--transition), background var(--transition);
+}
+.accordion-toggle:hover {
+  color: var(--text-2);
+  background: var(--surface-3);
+}
+.accordion-toggle .chevron {
+  transition: transform 0.2s ease;
+  display: block;
+}
+/* Collapsed: chevron rotates to point right (►) */
+.accordion-toggle[aria-expanded="false"] .chevron {
+  transform: rotate(-90deg);
+}
+
 /* ══════════════ AUTH FOOTER SECONDARY ══════════════ */
 .auth-footer-secondary {
   margin-top: 10px;
