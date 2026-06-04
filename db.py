@@ -256,5 +256,27 @@ def init_schema() -> None:
         execute_script(_SQLITE_SCHEMA)
         return
 
+    # Gunicorn starts multiple workers simultaneously — every worker calls
+    # init_schema(), and concurrent DDL (CREATE OR REPLACE FUNCTION, DROP/CREATE
+    # TRIGGER, ALTER TABLE) deadlocks on pg_proc catalog rows.
+    #
+    # Fix: acquire a transaction-level advisory lock before running any DDL.
+    # pg_try_advisory_xact_lock() returns FALSE immediately if another process
+    # already holds it, so competing workers skip cleanly instead of waiting
+    # and creating a circular lock chain. The lock auto-releases on commit/rollback.
     schema_path = Path(__file__).with_name("schema.sql")
-    execute_script(schema_path.read_text())
+    script = schema_path.read_text()
+
+    with get_db() as conn:
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT pg_try_advisory_xact_lock(7482910) AS acquired")
+            row = _row_to_dict(cur.fetchone())
+            if not row or not row.get("acquired"):
+                logger.info("Schema init: lock held by another worker — skipping")
+                return
+            logger.info("Schema init: running migrations")
+            cur.execute(script)
+            logger.info("Schema init: complete")
+        finally:
+            cur.close()
