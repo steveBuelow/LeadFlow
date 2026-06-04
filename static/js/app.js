@@ -188,34 +188,36 @@ function validateLeadPayload(payload, prefix) {
   return true;
 }
 
+function safeToggleHidden(id, forceHidden) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle("hidden", forceHidden);
+}
+
 function setAuthMode(mode) {
   state.authMode = mode;
   const isForgot   = mode === "forgot";
   const isRegister = mode === "register";
 
-  // Show/hide form fields
-  $("#auth-username-group").classList.toggle("hidden", isForgot);
-  $("#register-email-group").classList.toggle("hidden", !isRegister && !isForgot);
-  $("#auth-password-group").classList.toggle("hidden", isForgot);
-  // "Forgot password?" link only in login mode
-  $("#forgot-pw-row").classList.toggle("hidden", mode !== "login");
+  // Show/hide form groups — null-safe so a partial deploy can't break login
+  safeToggleHidden("auth-username-group",  isForgot);
+  safeToggleHidden("register-email-group", !isRegister && !isForgot);
+  safeToggleHidden("auth-password-group",  isForgot);
+  safeToggleHidden("forgot-pw-row",        mode !== "login");
 
   if (isForgot) {
-    $("#auth-email-label").textContent = "Email address";
     $("#auth-title").textContent = "Reset password";
-    $("#auth-copy").textContent = "Enter your email and we'll send reset instructions.";
+    $("#auth-copy").textContent  = "Enter your email and we'll send reset instructions.";
     $("#auth-submit").textContent = "Send reset link";
     $("#auth-toggle-text").textContent = "Remember your password?";
-    $("#auth-toggle-btn").textContent = "Sign in";
+    $("#auth-toggle-btn").textContent  = "Sign in";
   } else {
-    $("#auth-email-label").textContent = "Email";
     $("#auth-title").textContent = isRegister ? "Create your workspace" : "Welcome back";
-    $("#auth-copy").textContent = isRegister
+    $("#auth-copy").textContent  = isRegister
       ? "Start with a secure CRM foundation built for outreach, partnerships, and inbound leads."
       : "Sign in to manage leads, reminders, and future AI workflows.";
     $("#auth-submit").textContent = isRegister ? "Create account" : "Sign in";
     $("#auth-toggle-text").textContent = isRegister ? "Already have an account?" : "Need an account?";
-    $("#auth-toggle-btn").textContent = isRegister ? "Sign in" : "Create one";
+    $("#auth-toggle-btn").textContent  = isRegister ? "Sign in" : "Create one";
   }
   $("#auth-email").value = "";
 }

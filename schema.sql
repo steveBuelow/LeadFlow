@@ -64,3 +64,20 @@ CREATE TABLE IF NOT EXISTS password_resets (
 
 CREATE INDEX IF NOT EXISTS idx_pw_resets_token ON password_resets(token_hash);
 CREATE INDEX IF NOT EXISTS idx_pw_resets_user  ON password_resets(user_id);
+
+-- ── Safe column migrations ────────────────────────────────────────────────
+-- These are no-ops if the column already exists. They fix production databases
+-- that were created with an older schema missing these columns.
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS company       VARCHAR(120);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS email         VARCHAR(254);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS phone         VARCHAR(30);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS source        VARCHAR(80)  NOT NULL DEFAULT 'Manual';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS priority      VARCHAR(10)  NOT NULL DEFAULT 'medium';
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS value         NUMERIC(12,2);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS message       TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS notes         TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS next_followup DATE;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS ai_score      SMALLINT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS ai_summary    TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS ai_category   VARCHAR(60);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW();
