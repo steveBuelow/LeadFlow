@@ -311,7 +311,7 @@ input, select, textarea { font: inherit; }
   letter-spacing: -0.05em;
 }
 .stat-money { font-size: 22px; }
-.stat-sub { color: var(--text-3); font-size: 12px; margin-top: 8px; }
+.stat-sub { color: var(--text-3); font-size: 12px; margin-top: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ══════════════ CONTENT GRID ══════════════ */
 .content-grid {
@@ -1093,6 +1093,14 @@ input, select, textarea { font: inherit; }
   text-align: center;
 }
 
+/* ══════════════ ANALYTICS PANEL ══════════════ */
+.panel-analytics {
+  margin-bottom: 22px;
+}
+.panel-analytics .stats-grid {
+  margin-bottom: 0;
+}
+
 /* ══════════════ RESPONSIVE ══════════════ */
 @media (max-width: 1280px) {
   .stats-grid { grid-template-columns: repeat(4, minmax(0,1fr)); }
@@ -1102,12 +1110,67 @@ input, select, textarea { font: inherit; }
   .hero, .content-grid   { grid-template-columns: 1fr; }
   .lead-grid             { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .board                 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  /* stats-grid holds at 4 cols down to 720 */
 }
 @media (max-width: 720px) {
   .auth-shell, .app-shell { width: min(100vw - 24px, 1380px); }
-  .header     { padding: 0 14px; }
-  .stats-grid, .lead-grid, .board { grid-template-columns: 1fr; }
+
+  /* ── Header ── */
+  .header   { padding: 0 14px; }
+  .logo-sub { display: none; }    /* tagline hidden — saves header space */
+  #user-label { display: none; }  /* show avatar dot only, not full username */
+
+  /* ── Stats: 2-col — 7 cards stacked in 1 col is scroll hell ── */
+  .stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+
+  /* ── Board: horizontal scroll so columns never crush ── */
+  .board {
+    grid-template-columns: repeat(6, minmax(180px, 1fr));
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    padding-bottom: 8px;
+  }
+  .board-col { scroll-snap-align: start; }
+
+  /* ── Lead form ── */
+  .lead-grid       { grid-template-columns: 1fr; }
   .span-2, .span-4 { grid-column: span 1; }
-  .lead-card  { grid-template-columns: 1fr; }
-  .lead-actions { flex-direction: row; flex-wrap: wrap; }
+  .lead-card       { grid-template-columns: 1fr; }
+  .lead-actions    { flex-direction: row; flex-wrap: wrap; }
+
+  /* ── Toolbar: stack pills + filters so nothing overflows ── */
+  .toolbar       { flex-direction: column; align-items: stretch; gap: 10px; }
+  .view-pills    { width: 100%; }
+  .pill          { flex: 1; text-align: center; }
+  .toolbar-right { flex-direction: column; }
+  .filter-select { width: 100%; }
+}
+
+/* ══════════════ 480 px — PHONES ══════════════ */
+@media (max-width: 480px) {
+  .header { height: 60px; }
+
+  .app-shell  { padding: 18px 0 36px; }
+  .auth-shell { padding: 20px 0; }
+
+  .auth-card  { padding: 26px 20px; border-radius: 20px; }
+  .auth-title { font-size: 2.1rem; }
+
+  .hero-title { font-size: clamp(1.9rem, 7vw, 2.6rem); }
+
+  .stats-grid { gap: 10px; }
+  .stat-card  { padding: 14px 12px 12px; border-radius: 14px; }
+  .stat-value { font-size: 22px; }
+  .stat-money { font-size: 17px; }
+
+  .panel       { padding: 16px; }
+  .panel-title { font-size: 1.05rem; }
+
+  /* board min-column slightly tighter on very small phones */
+  .board { grid-template-columns: repeat(6, minmax(155px, 1fr)); }
+
+  /* stacked action buttons on tiny screens */
+  .panel-actions         { flex-direction: column; }
+  .panel-actions .btn    { width: 100%; }
 }

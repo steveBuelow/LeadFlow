@@ -908,6 +908,12 @@ function attachEvents() {
 function initAccordions() {
   const PANELS = [
     {
+      toggleId:    "toggle-analytics",
+      bodyId:      "analytics-body",
+      storageKey:  "lf_panel_analytics",
+      defaultOpen: true,
+    },
+    {
       toggleId:   "toggle-new-lead",
       bodyId:     "new-lead-body",
       storageKey: "lf_panel_new_lead",

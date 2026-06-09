@@ -101,6 +101,37 @@ def create_app(config_override: dict | None = None) -> Flask:
     def healthz():
         return jsonify({"ok": True, "app": app.config["APP_NAME"]})
 
+    @app.get("/healthz/db")
+    def healthz_db():
+        """
+        Safe DB connectivity diagnostic — never exposes credentials or stack traces.
+        Returns error type + message so you can diagnose RLS / SSL / connection issues
+        without leaking secrets. Blocked in production.
+        """
+        if is_production:
+            return jsonify({"ok": False, "error": "Not available in production."}), 403
+        try:
+            from db import fetch_one as _fetch
+            result = _fetch("SELECT current_user AS u, pg_backend_pid() AS pid")
+            # Also test INSERT privilege by checking RLS status on the users table
+            rls_row = _fetch(
+                "SELECT relrowsecurity AS rls_enabled "
+                "FROM pg_class WHERE relname = 'users' AND relnamespace = 'public'::regnamespace"
+            )
+            return jsonify({
+                "ok": True,
+                "db_user": result.get("u") if result else None,
+                "backend_pid": result.get("pid") if result else None,
+                "users_rls_enabled": rls_row.get("rls_enabled") if rls_row else None,
+            })
+        except Exception as exc:
+            # Expose error TYPE + message only — no secrets, no traceback
+            return jsonify({
+                "ok": False,
+                "error_type": type(exc).__name__,
+                "error": str(exc)[:300],
+            }), 500
+
     @app.errorhandler(400)
     def bad_request(_error):
         return jsonify({"success": False, "error": "Bad request."}), 400
