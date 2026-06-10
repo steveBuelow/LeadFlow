@@ -49,7 +49,12 @@ def create_app(config_override: dict | None = None) -> Flask:
 
     limiter.init_app(app)
 
-    init_schema()
+    try:
+        init_schema()
+    except Exception as exc:
+        # Bad DATABASE_URL or DB temporarily unreachable at deploy time.
+        # Log it clearly instead of crashing every gunicorn worker on boot.
+        logger.error("Schema init failed at startup — check DATABASE_URL: %s", exc)
     if not app.config.get("TESTING"):
         try:
             init_pool()

@@ -81,3 +81,34 @@ ALTER TABLE leads ADD COLUMN IF NOT EXISTS ai_score      SMALLINT;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS ai_summary    TEXT;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS ai_category   VARCHAR(60);
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW();
+
+-- ── Sequence guard ────────────────────────────────────────────────────────
+-- CREATE TABLE IF NOT EXISTS is a no-op when the table already exists, so
+-- SERIAL sequences are never created on pre-existing tables. This block
+-- detects and repairs any id column that has no DEFAULT (i.e. no sequence).
+DO $$
+DECLARE
+  tbl TEXT;
+  seq TEXT;
+BEGIN
+  FOREACH tbl IN ARRAY ARRAY['users', 'leads', 'password_resets'] LOOP
+    IF (SELECT column_default FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND   table_name   = tbl
+        AND   column_name  = 'id') IS NULL THEN
+
+      seq := 'public.' || tbl || '_id_seq';
+      EXECUTE format('CREATE SEQUENCE IF NOT EXISTS %s', seq);
+      EXECUTE format(
+        'ALTER TABLE public.%I ALTER COLUMN id SET DEFAULT nextval(%L::regclass)',
+        tbl, seq
+      );
+      EXECUTE format('ALTER SEQUENCE %s OWNED BY public.%I.id', seq, tbl);
+      EXECUTE format(
+        'SELECT setval(%L, COALESCE((SELECT MAX(id) FROM public.%I), 0) + 1, false)',
+        seq, tbl
+      );
+      RAISE NOTICE 'Attached missing sequence % to %.id', seq, tbl;
+    END IF;
+  END LOOP;
+END $$;
