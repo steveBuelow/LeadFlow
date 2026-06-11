@@ -8,54 +8,15 @@ A lightweight, self-contained CRM for small businesses. Manage leads, track pipe
 
 ## See it in action
 
-### Desktop App Shell — Sidebar + Analytics
-<video controls width="100%" muted loop style="margin-bottom: 2rem; border-radius: 8px;">
-  <source src="/static/videos/demo-desktop-app-shell.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+### Desktop App Shell — Lead Capture & Follow-up Generation
 
-<!-- TODO: Add desktop app shell demo MP4 (1920×1080 or 1280×720, 15–30 sec) showing:
-  - Fixed sidebar (260px zinc-950) with nav
-  - Main workspace with analytics cards (scrollable independently)
-  - Open mobile hamburger drawer to show responsive behavior
--->
+<video src="https://github.com/user-attachments/assets/32582434-2b15-46f0-9ea2-f7b400a2a2fe" autoplay loop muted width="100%"></video>
 
 ### Mobile Responsive Flow
-<video controls width="100%" muted loop style="margin-bottom: 2rem; border-radius: 8px;">
-  <source src="/static/videos/demo-mobile-responsive.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
-<!-- TODO: Add mobile responsive demo MP4 (375px viewport or similar, 15–30 sec) showing:
-  - Full-screen mobile layout
-  - Hamburger menu open/close
-  - Form interaction and touch responsiveness
--->
-
-### Lead Capture Flow
-<video controls width="100%" muted loop style="margin-bottom: 2rem; border-radius: 8px;">
-  <source src="/static/videos/demo-lead-capture.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
-<!-- TODO: Add lead capture demo MP4 (1920×1080, 15–30 sec) showing:
-  - Fill out a new lead form
-  - Submit and see validation/feedback
-  - Toast notification
-  - Lead appears in list/pipeline
--->
+<video src="https://github.com/user-attachments/assets/c730244e-f4a2-43e9-8ac8-42f20698f946" autoplay loop muted width="100%"></video>
 
 ### Kanban Pipeline View
-<video controls width="100%" muted loop style="margin-bottom: 2rem; border-radius: 8px;">
-  <source src="/static/videos/demo-kanban-pipeline.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
-<!-- TODO: Add Kanban demo MP4 (1920×1080, 15–30 sec) showing:
-  - Drag lead card between pipeline columns
-  - Status updates in real-time
-  - Filter or search interaction
--->
+<video src="https://github.com/user-attachments/assets/eaf61ecf-f47a-42c5-a1b6-3a77286ff5d6" autoplay loop muted width="100%"></video>
 
 ---
 
